@@ -1,20 +1,34 @@
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import './src/config/firebase';
+import { StyleSheet, View } from 'react-native';
+import { BookingProvider, useBooking } from './src/context/BookingContext';
+import BookingStatusScreen from './src/screens/BookingStatusScreen';
+import EstimateScreen from './src/screens/EstimateScreen';
+import HomeScreen from './src/screens/HomeScreen';
+import ReviewBookingScreen from './src/screens/ReviewBookingScreen';
 
-export default function App() {
+function AppContent() {
+  const { screen } = useBooking();
+
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
+    <View style={styles.root}>
+      {screen === 'home' && <HomeScreen />}
+      {screen === 'estimate' && <EstimateScreen />}
+      {screen === 'review' && <ReviewBookingScreen />}
+      {screen === 'status' && <BookingStatusScreen />}
     </View>
   );
 }
 
+export default function App() {
+  return (
+    <BookingProvider>
+      <AppContent />
+    </BookingProvider>
+  );
+}
+
 const styles = StyleSheet.create({
-  container: {
+  root: {
     flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
   },
 });
