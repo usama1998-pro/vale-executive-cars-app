@@ -6,26 +6,41 @@ type FormInputProps = TextInputProps & {
   icon?: keyof typeof Ionicons.glyphMap;
   trailingIcon?: keyof typeof Ionicons.glyphMap;
   scale?: number;
+  dense?: boolean;
+  webFit?: boolean;
+  inputGap?: number;
 };
 
 export default function FormInput({
   icon,
   trailingIcon,
   scale = 1,
+  dense = false,
+  webFit = false,
+  inputGap,
   style,
   placeholderTextColor = colors.textMuted,
   ...props
 }: FormInputProps) {
   const iconSize = Math.round(16 * scale);
+  const tight = dense || webFit;
+  const fieldHeight = Math.round(
+    (tight ? 30 : scale < 0.7 ? 34 : 44) * scale,
+  );
+  const fieldPadding = Math.round(
+    (tight ? 4 : scale < 0.45 ? 5 : 10) * scale,
+  );
+  const gap = inputGap ?? (dense ? Math.round(3 * scale) : scale < 0.7 ? 6 : 10);
 
   return (
     <View
       style={[
         styles.wrapper,
         {
-          minHeight: Math.round((scale < 0.7 ? 34 : 44) * scale),
+          minHeight: fieldHeight,
           borderRadius: Math.round(radius.sm * scale),
-          marginBottom: scale < 0.7 ? 6 : 10,
+          marginBottom: gap,
+          paddingHorizontal: tight ? Math.round(8 * scale) : 12,
         },
       ]}
     >
@@ -46,8 +61,9 @@ export default function FormInput({
           style={[
             styles.input,
             {
-              fontSize: Math.round(14 * scale),
-              paddingVertical: Math.round(10 * scale),
+              fontSize: Math.round((tight ? 13 : 14) * scale),
+              paddingVertical: fieldPadding,
+              minHeight: fieldHeight - fieldPadding * 2,
             },
             style,
           ]}
@@ -85,7 +101,6 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     width: '100%',
-    minHeight: 40,
     color: colors.text,
   },
 });

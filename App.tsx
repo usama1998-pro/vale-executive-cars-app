@@ -1,5 +1,5 @@
 import './src/config/firebase';
-import { StyleSheet, View } from 'react-native';
+import { Platform, StyleSheet, View } from 'react-native';
 import { BookingProvider, useBooking } from './src/context/BookingContext';
 import BookingStatusScreen from './src/screens/BookingStatusScreen';
 import EstimateScreen from './src/screens/EstimateScreen';
@@ -30,5 +30,11 @@ export default function App() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
+    ...(Platform.OS === 'web'
+      ? ({
+          minHeight: '100vh',
+          width: '100%',
+        } as object)
+      : null),
   },
 });

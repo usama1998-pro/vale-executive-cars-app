@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useBooking } from '../../context/BookingContext';
 import { colors, radius, spacing } from '../../theme';
 import FormInput from './FormInput';
@@ -9,36 +9,81 @@ import PreferredPickupPicker from './PreferredPickupPicker';
 type BookingFormProps = {
   scale: number;
   compact?: boolean;
+  dense?: boolean;
+  fill?: boolean;
+  isWeb?: boolean;
 };
 
-export default function BookingForm({ scale, compact = false }: BookingFormProps) {
+export default function BookingForm({
+  scale,
+  compact = false,
+  dense = false,
+  fill = false,
+  isWeb = false,
+}: BookingFormProps) {
   const { form, updateForm, goToEstimate } = useBooking();
 
-  const headingSize = Math.round((compact ? 14 : 20) * scale);
-  const subSize = Math.round((compact ? 9 : 11) * scale);
-  const sectionSize = Math.round((compact ? 10 : 12) * scale);
-  const panelPadding = compact ? spacing.sm : spacing.lg;
+  const webFit = isWeb && fill;
+  const tight = compact || dense || webFit;
+  const headingSize = Math.round(
+    (dense ? 14 : compact ? 14 : isWeb ? 22 : 20) * scale,
+  );
+  const subSize = Math.round(
+    (dense ? 9 : compact ? 9 : isWeb ? 12 : 11) * scale,
+  );
+  const sectionSize = Math.round(
+    (dense ? 10 : compact ? 10 : isWeb ? 13 : 12) * scale,
+  );
+  const panelPadding = dense
+    ? spacing.xs
+    : webFit
+      ? Math.round(12 * scale)
+      : compact
+        ? spacing.sm
+        : spacing.lg;
+  const inputGap = webFit
+    ? Math.round(6 * scale)
+    : dense
+      ? Math.round(3 * scale)
+      : 10;
 
-  return (
-    <View style={[styles.panel, compact && styles.panelCompact, { padding: panelPadding }]}>
-      <Text style={[styles.heading, { fontSize: headingSize }]}>BOOK YOUR EXECUTIVE TAXI</Text>
+  const formContent = (
+    <>
+      <Text style={[styles.heading, { fontSize: headingSize }]}>
+        BOOK YOUR EXECUTIVE TAXI
+      </Text>
       <Text
         style={[
           styles.subheading,
-          compact && styles.subheadingCompact,
+          tight && styles.subheadingCompact,
+          dense && styles.subheadingDense,
           { fontSize: subSize },
         ]}
       >
         QUICK. EASY. RELIABLE.
       </Text>
 
-      <View style={styles.sectionHeader}>
-        <Ionicons name="person-outline" size={16 * scale} color={colors.gold} />
-        <Text style={[styles.sectionTitle, { fontSize: sectionSize }]}>CUSTOMER DETAILS</Text>
+      <View
+        style={[
+          styles.sectionHeader,
+          tight && { marginBottom: spacing.xs },
+        ]}
+      >
+        <Ionicons
+          name="person-outline"
+          size={16 * scale}
+          color={colors.gold}
+        />
+        <Text style={[styles.sectionTitle, { fontSize: sectionSize }]}>
+          CUSTOMER DETAILS
+        </Text>
       </View>
 
       <FormInput
         scale={scale}
+        dense={dense}
+        webFit={webFit}
+        inputGap={inputGap}
         icon="person-outline"
         placeholder="Customer Name"
         value={form.customerName}
@@ -46,6 +91,9 @@ export default function BookingForm({ scale, compact = false }: BookingFormProps
       />
       <FormInput
         scale={scale}
+        dense={dense}
+        webFit={webFit}
+        inputGap={inputGap}
         icon="call-outline"
         trailingIcon="logo-whatsapp"
         placeholder="Customer Contact Number"
@@ -55,6 +103,9 @@ export default function BookingForm({ scale, compact = false }: BookingFormProps
       />
       <FormInput
         scale={scale}
+        dense={dense}
+        webFit={webFit}
+        inputGap={inputGap}
         icon="mail-outline"
         placeholder="Customer Email Address"
         value={form.email}
@@ -63,13 +114,29 @@ export default function BookingForm({ scale, compact = false }: BookingFormProps
         autoCapitalize="none"
       />
 
-      <View style={[styles.sectionHeader, { marginTop: spacing.sm }]}>
-        <Ionicons name="location-outline" size={16 * scale} color={colors.gold} />
-        <Text style={[styles.sectionTitle, { fontSize: sectionSize }]}>JOURNEY DETAILS</Text>
+      <View
+        style={[
+          styles.sectionHeader,
+          tight
+            ? { marginBottom: spacing.xs, marginTop: spacing.xs }
+            : { marginTop: spacing.sm },
+        ]}
+      >
+        <Ionicons
+          name="location-outline"
+          size={16 * scale}
+          color={colors.gold}
+        />
+        <Text style={[styles.sectionTitle, { fontSize: sectionSize }]}>
+          JOURNEY DETAILS
+        </Text>
       </View>
 
       <FormInput
         scale={scale}
+        dense={dense}
+        webFit={webFit}
+        inputGap={inputGap}
         icon="location-outline"
         placeholder="From"
         value={form.from}
@@ -77,6 +144,9 @@ export default function BookingForm({ scale, compact = false }: BookingFormProps
       />
       <FormInput
         scale={scale}
+        dense={dense}
+        webFit={webFit}
+        inputGap={inputGap}
         icon="location-outline"
         placeholder="Via (optional)"
         value={form.via}
@@ -84,6 +154,9 @@ export default function BookingForm({ scale, compact = false }: BookingFormProps
       />
       <FormInput
         scale={scale}
+        dense={dense}
+        webFit={webFit}
+        inputGap={inputGap}
         icon="location-outline"
         placeholder="To"
         value={form.to}
@@ -92,6 +165,7 @@ export default function BookingForm({ scale, compact = false }: BookingFormProps
 
       <PreferredPickupPicker
         scale={scale}
+        dense={dense || webFit}
         value={form.preferredPickupAt}
         onChange={(preferredPickupAt) => updateForm({ preferredPickupAt })}
       />
@@ -100,16 +174,50 @@ export default function BookingForm({ scale, compact = false }: BookingFormProps
         label="GET ESTIMATE"
         icon="car-sport-outline"
         scale={scale}
-        style={styles.submitButton}
+        style={tight ? styles.submitButtonTight : styles.submitButton}
         onPress={goToEstimate}
       />
+    </>
+  );
+
+  if (webFit) {
+    return (
+      <View
+        style={[
+          styles.panel,
+          styles.panelFill,
+          { padding: panelPadding, overflow: 'hidden' },
+        ]}
+      >
+        <ScrollView
+          style={styles.innerScroll}
+          contentContainerStyle={styles.innerScrollContent}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled
+        >
+          {formContent}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  return (
+    <View
+      style={[
+        styles.panel,
+        fill && styles.panelFill,
+        compact && styles.panelCompact,
+        dense && styles.panelDense,
+        { padding: panelPadding },
+      ]}
+    >
+      {formContent}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   panel: {
-    flex: 1,
     minWidth: 280,
     zIndex: 2,
     backgroundColor: colors.backgroundPanel,
@@ -118,12 +226,31 @@ const styles = StyleSheet.create({
     borderRadius: radius.md,
     overflow: 'hidden',
   },
+  panelFill: {
+    flex: 1,
+    minHeight: 0,
+  },
   panelCompact: {
     minWidth: 0,
     justifyContent: 'space-between',
   },
+  panelDense: {
+    minWidth: 0,
+    justifyContent: 'space-between',
+  },
+  innerScroll: {
+    flex: 1,
+  },
+  innerScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'space-between',
+  },
   subheadingCompact: {
+    marginTop: 2,
     marginBottom: spacing.sm,
+  },
+  subheadingDense: {
+    marginBottom: spacing.xs,
   },
   heading: {
     color: colors.goldLight,
@@ -151,6 +278,10 @@ const styles = StyleSheet.create({
   },
   submitButton: {
     marginTop: spacing.md,
+    alignSelf: 'stretch',
+  },
+  submitButtonTight: {
+    marginTop: spacing.sm,
     alignSelf: 'stretch',
   },
 });

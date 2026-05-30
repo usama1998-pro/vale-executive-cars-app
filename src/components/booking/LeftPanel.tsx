@@ -13,21 +13,51 @@ type LeftPanelProps = {
   scale: number;
   isWide: boolean;
   compact?: boolean;
+  dense?: boolean;
+  fill?: boolean;
+  isWeb?: boolean;
+  webFit?: boolean;
 };
 
-export default function LeftPanel({ scale, isWide, compact = false }: LeftPanelProps) {
-  const sectionTitle = Math.round(13 * scale);
-  const bodySize = Math.round(12 * scale);
-  const smallSize = Math.round(10 * scale);
+export default function LeftPanel({
+  scale,
+  isWide,
+  compact = false,
+  dense = false,
+  fill = false,
+  isWeb = false,
+  webFit = false,
+}: LeftPanelProps) {
+  const sectionTitle = Math.round((dense ? 11 : isWeb ? 14 : 13) * scale);
+  const bodySize = Math.round((dense ? 10 : isWeb ? 13 : 12) * scale);
+  const smallSize = Math.round((dense ? 9 : isWeb ? 12 : 10) * scale);
 
-  const blockGap = compact ? spacing.sm : spacing.md;
-  const sectionGap = compact ? spacing.sm : spacing.lg;
-  const qrSize = compact ? 56 * scale : 100 * scale;
+  const tight = compact || dense || webFit;
+  const blockGap = tight ? spacing.sm : spacing.md;
+  const sectionGap = tight ? spacing.sm : spacing.lg;
+  const qrSize = dense
+    ? 44 * scale
+    : webFit
+      ? 72 * scale
+      : compact
+        ? 56 * scale
+        : 100 * scale;
 
   return (
-    <View style={[styles.panel, compact && styles.panelCompact]}>
+    <View
+      style={[
+        styles.panel,
+        fill && styles.panelFill,
+        tight && styles.panelCompact,
+        dense && styles.panelDense,
+      ]}
+    >
       <View style={[styles.section, { marginBottom: blockGap }]}>
-        <Ionicons name="airplane" size={(compact ? 16 : 22) * scale} color={colors.gold} />
+        <Ionicons
+          name="airplane"
+          size={(tight ? 16 : 22) * scale}
+          color={colors.gold}
+        />
         <Text style={[styles.sectionTitle, { fontSize: sectionTitle }]}>
           AIRPORT TRANSFERS
         </Text>
@@ -44,8 +74,18 @@ export default function LeftPanel({ scale, isWide, compact = false }: LeftPanelP
         />
       </View>
 
-      <View style={[styles.noticeBox, compact && styles.noticeBoxCompact, { marginBottom: sectionGap }]}>
-        <Ionicons name="alert-circle-outline" size={20 * scale} color={colors.gold} />
+      <View
+        style={[
+          styles.noticeBox,
+          tight && styles.noticeBoxCompact,
+          { marginBottom: sectionGap },
+        ]}
+      >
+        <Ionicons
+          name="alert-circle-outline"
+          size={20 * scale}
+          color={colors.gold}
+        />
         <Text style={[styles.noticeText, { fontSize: smallSize }]}>
           IF YOU WOULD LIKE TO PRE-BOOK AN EXECUTIVE TAXI, PLEASE COMPLETE THE
           BOOKING FORM. FOR LAST-MINUTE BOOKINGS OR URGENT TRAVEL REQUESTS,
@@ -74,7 +114,7 @@ export default function LeftPanel({ scale, isWide, compact = false }: LeftPanelP
           label="PHONE"
           value="01367 333333"
           scale={scale}
-          compact={compact}
+          compact={tight}
           onPress={() => Linking.openURL('tel:01367333333')}
         />
         <ContactItem
@@ -82,7 +122,7 @@ export default function LeftPanel({ scale, isWide, compact = false }: LeftPanelP
           label="WHATSAPP"
           value="07708 044445"
           scale={scale}
-          compact={compact}
+          compact={tight}
           onPress={() => Linking.openURL(WHATSAPP_URL)}
         />
       </View>
@@ -90,26 +130,35 @@ export default function LeftPanel({ scale, isWide, compact = false }: LeftPanelP
       <View
         style={[
           styles.qrSection,
-          compact && styles.qrSectionCompact,
+          tight && styles.qrSectionCompact,
           !isWide && styles.qrSectionStacked,
-          { marginBottom: compact ? 0 : sectionGap },
+          { marginBottom: tight ? 0 : sectionGap },
         ]}
       >
         <View style={styles.qrTextBlock}>
           <Ionicons
             name="logo-whatsapp"
-            size={(compact ? 24 : 36) * scale}
+            size={(tight ? 24 : 36) * scale}
             color={colors.gold}
           />
-          <Text style={[styles.sectionTitle, { fontSize: sectionTitle, marginTop: 4 }]}>
+          <Text
+            style={[
+              styles.sectionTitle,
+              { fontSize: sectionTitle, marginTop: 4 },
+            ]}
+          >
             WHATSAPP US
           </Text>
-          <Text style={[styles.qrSubtitle, { fontSize: sectionTitle }]}>SCAN QR CODE</Text>
-          {!compact ? (
-            <Text style={[styles.body, { fontSize: smallSize, marginTop: 4 }]}>
+          <Text style={[styles.qrSubtitle, { fontSize: sectionTitle }]}>
+            SCAN QR CODE
+          </Text>
+          {!tight && (
+            <Text
+              style={[styles.body, { fontSize: smallSize, marginTop: 4 }]}
+            >
               Open WhatsApp camera and scan to chat with us instantly!
             </Text>
-          ) : null}
+          )}
         </View>
         <Image
           source={{ uri: QR_IMAGE }}
@@ -118,22 +167,27 @@ export default function LeftPanel({ scale, isWide, compact = false }: LeftPanelP
         />
       </View>
 
-      {!compact ? (
-      <View style={styles.partnership}>
-        <Text style={[styles.partnershipLabel, { fontSize: smallSize }]}>
-          IN PARTNERSHIP WITH
-        </Text>
-        <Text style={[styles.partnershipName, { fontSize: Math.round(18 * scale) }]}>
-          COTSWOLDS FINEST PUBS
-        </Text>
-        <MaterialCommunityIcons
-          name="home-variant"
-          size={64 * scale}
-          color={colors.textMuted}
-          style={styles.pubIcon}
-        />
-      </View>
-      ) : null}
+      {!tight && (
+        <View style={styles.partnership}>
+          <Text style={[styles.partnershipLabel, { fontSize: smallSize }]}>
+            IN PARTNERSHIP WITH
+          </Text>
+          <Text
+            style={[
+              styles.partnershipName,
+              { fontSize: Math.round(18 * scale) },
+            ]}
+          >
+            COTSWOLDS FINEST PUBS
+          </Text>
+          <MaterialCommunityIcons
+            name="home-variant"
+            size={64 * scale}
+            color={colors.textMuted}
+            style={styles.pubIcon}
+          />
+        </View>
+      )}
     </View>
   );
 }
@@ -159,19 +213,29 @@ function ContactItem({
       onPress={onPress}
     >
       <Ionicons name={icon} size={20 * scale} color={colors.gold} />
-      <Text style={[styles.contactLabel, { fontSize: 10 * scale }]}>{label}</Text>
-      <Text style={[styles.contactValue, { fontSize: 13 * scale }]}>{value}</Text>
+      <Text style={[styles.contactLabel, { fontSize: 10 * scale }]}>
+        {label}
+      </Text>
+      <Text style={[styles.contactValue, { fontSize: 13 * scale }]}>
+        {value}
+      </Text>
     </Pressable>
   );
 }
 
 const styles = StyleSheet.create({
   panel: {
-    flex: 1,
     minWidth: 280,
+  },
+  panelFill: {
+    flex: 1,
+    minHeight: 0,
   },
   panelCompact: {
     minWidth: 0,
+    justifyContent: 'space-between',
+  },
+  panelDense: {
     justifyContent: 'space-between',
   },
   section: {

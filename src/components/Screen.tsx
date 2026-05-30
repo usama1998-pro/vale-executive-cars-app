@@ -1,5 +1,5 @@
 import { ReactNode } from 'react';
-import { StyleSheet, View, ViewStyle } from 'react-native';
+import { Platform, StyleSheet, View, ViewStyle } from 'react-native';
 
 type ScreenProps = {
   children: ReactNode;
@@ -15,5 +15,10 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     height: '100%',
+    ...(Platform.OS === 'web'
+      ? ({
+          minHeight: '100vh',
+        } as object)
+      : null),
   },
 });

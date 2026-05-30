@@ -11,10 +11,14 @@ import { colors } from '../theme';
 
 export default function HomeScreen() {
   const {
+    width,
     height,
     isTablet,
     isMobile,
     isWide,
+    isLandscape,
+    isPhoneLandscape,
+    isWeb,
     fitToScreen,
     scale,
     contentPadding,
@@ -24,11 +28,17 @@ export default function HomeScreen() {
     maxContentWidth,
   } = useResponsive();
   const keyboardPadding = useKeyboardPadding(32);
+  const isTabletPortrait = isTablet && !isLandscape;
+  const compactLayout = fitToScreen && !isWeb;
+  const webFit = isWeb && fitToScreen;
+  const sideBySide = isWide && !isTabletPortrait;
+  const formFirst = (isMobile && !isPhoneLandscape) || isTabletPortrait;
+  const layoutKey = `${Math.round(width)}x${Math.round(height)}-${fitToScreen ? 'fit' : 'scroll'}`;
 
   const pagePadding = {
     paddingHorizontal: contentPadding,
     paddingTop: screenPaddingTop,
-    paddingBottom: screenPaddingBottom + keyboardPadding,
+    paddingBottom: screenPaddingBottom + (isWeb ? 0 : keyboardPadding),
   };
 
   const content = (
@@ -39,30 +49,73 @@ export default function HomeScreen() {
         { maxWidth: maxContentWidth, alignSelf: 'center', width: '100%' },
       ]}
     >
-      <Header scale={scale} isWide={isWide} compact={fitToScreen} />
+      <Header scale={scale} isWide={isWide} compact={compactLayout} isWeb={isWeb} webFit={webFit} />
 
       <View
         style={[
           styles.main,
           fitToScreen && styles.mainFit,
-          isWide ? styles.mainWide : styles.mainStacked,
+          sideBySide ? styles.mainWide : styles.mainStacked,
           { gap: columnGap },
         ]}
       >
-        {isMobile ? (
+        {formFirst ? (
           <>
-            <BookingForm scale={scale} compact={fitToScreen} />
-            <LeftPanel scale={scale} isWide={isWide} compact={fitToScreen} />
+            <View style={fitToScreen ? styles.columnFit : undefined}>
+              <BookingForm
+                scale={scale}
+                compact={compactLayout}
+                dense={isPhoneLandscape}
+                fill={fitToScreen}
+                isWeb={isWeb}
+              />
+            </View>
+            <View style={fitToScreen ? styles.columnFit : undefined}>
+              <LeftPanel
+                scale={scale}
+                isWide={isWide}
+                compact={compactLayout}
+                dense={isPhoneLandscape}
+                fill={fitToScreen}
+                isWeb={isWeb}
+                webFit={webFit}
+              />
+            </View>
           </>
         ) : (
           <>
-            <LeftPanel scale={scale} isWide={isWide} compact={fitToScreen} />
-            <BookingForm scale={scale} compact={fitToScreen} />
+            <View style={fitToScreen ? styles.columnFit : undefined}>
+              <LeftPanel
+                scale={scale}
+                isWide={isWide}
+                compact={compactLayout}
+                dense={isPhoneLandscape}
+                fill={fitToScreen}
+                isWeb={isWeb}
+                webFit={webFit}
+              />
+            </View>
+            <View style={fitToScreen ? styles.columnFit : undefined}>
+              <BookingForm
+                scale={scale}
+                compact={compactLayout}
+                dense={isPhoneLandscape}
+                fill={fitToScreen}
+                isWeb={isWeb}
+              />
+            </View>
           </>
         )}
       </View>
 
-      <Footer scale={scale} isWide={isWide} isTablet={isTablet} compact={fitToScreen} />
+      <Footer
+        scale={scale}
+        isWide={isWide || isPhoneLandscape || isWeb}
+        isTablet={isTablet || isPhoneLandscape || isWeb}
+        compact={compactLayout}
+        isWeb={isWeb}
+        webFit={webFit}
+      />
     </View>
   );
 
@@ -71,19 +124,19 @@ export default function HomeScreen() {
       <StatusBar style="light" />
       <KeyboardAvoidingView
         style={styles.keyboardView}
-        behavior="padding"
+        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+        enabled={Platform.OS !== 'web'}
         keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
       >
         {fitToScreen ? (
-          <View style={[styles.fitRoot, pagePadding]}>{content}</View>
+          <View key={layoutKey} style={[styles.fitRoot, pagePadding]}>
+            {content}
+          </View>
         ) : (
           <ScrollView
+            key={layoutKey}
             style={styles.scroll}
-            contentContainerStyle={[
-              styles.scrollContent,
-              pagePadding,
-              { minHeight: height },
-            ]}
+            contentContainerStyle={[styles.scrollContent, pagePadding]}
             showsVerticalScrollIndicator
             keyboardShouldPersistTaps="handled"
             keyboardDismissMode="on-drag"
@@ -114,12 +167,14 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     flexGrow: 1,
+    paddingBottom: 8,
   },
   content: {
     width: '100%',
   },
   contentFit: {
     flex: 1,
+    minHeight: 0,
   },
   main: {
     width: '100%',
@@ -134,5 +189,10 @@ const styles = StyleSheet.create({
   },
   mainStacked: {
     flexDirection: 'column',
+  },
+  columnFit: {
+    flex: 1,
+    minWidth: 0,
+    minHeight: 0,
   },
 });

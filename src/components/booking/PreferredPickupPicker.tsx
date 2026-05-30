@@ -15,6 +15,7 @@ type PreferredPickupPickerProps = {
   value: string;
   onChange: (iso: string) => void;
   scale?: number;
+  dense?: boolean;
 };
 
 type PickerMode = 'date' | 'time' | null;
@@ -23,6 +24,7 @@ export default function PreferredPickupPicker({
   value,
   onChange,
   scale = 1,
+  dense = false,
 }: PreferredPickupPickerProps) {
   const selectedDate = value ? new Date(value) : null;
   const [pickerMode, setPickerMode] = useState<PickerMode>(null);
@@ -61,9 +63,11 @@ export default function PreferredPickupPicker({
   const fontSize = Math.round(14 * scale);
   const labelSize = Math.round(11 * scale);
 
+  const selectorHeight = Math.round((dense ? 28 : 44) * scale);
+
   return (
-    <View style={styles.wrapper}>
-      <View style={styles.labelRow}>
+    <View style={[styles.wrapper, dense && { marginBottom: 3 }]}>
+      <View style={[styles.labelRow, dense && styles.labelRowDense]}>
         <Ionicons name="time-outline" size={iconSize} color={colors.gold} />
         <Text style={[styles.label, { fontSize: labelSize }]}>
           PREFERRED PICKUP (OPTIONAL)
@@ -72,7 +76,7 @@ export default function PreferredPickupPicker({
 
       <View style={styles.row}>
         <Pressable
-          style={[styles.selector, { minHeight: Math.round(44 * scale) }]}
+          style={[styles.selector, { minHeight: selectorHeight }]}
           onPress={() => openPicker('date')}
         >
           <Ionicons name="calendar-outline" size={iconSize} color={colors.gold} />
@@ -82,7 +86,7 @@ export default function PreferredPickupPicker({
         </Pressable>
 
         <Pressable
-          style={[styles.selector, { minHeight: Math.round(44 * scale) }]}
+          style={[styles.selector, { minHeight: selectorHeight }]}
           onPress={() => openPicker('time')}
         >
           <Ionicons name="time-outline" size={iconSize} color={colors.gold} />
@@ -130,6 +134,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     marginBottom: 8,
+  },
+  labelRowDense: {
+    marginBottom: 4,
+    gap: 4,
   },
   label: {
     color: colors.gold,

@@ -14,14 +14,30 @@ type FooterProps = {
   isWide: boolean;
   isTablet: boolean;
   compact?: boolean;
+  isWeb?: boolean;
+  webFit?: boolean;
 };
 
-export default function Footer({ scale, isWide, isTablet, compact = false }: FooterProps) {
-  const labelSize = Math.round((compact ? 7 : 9) * scale);
-  const iconSize = compact ? 28 : 40;
+export default function Footer({
+  scale,
+  isWide,
+  isTablet,
+  compact = false,
+  isWeb = false,
+  webFit = false,
+}: FooterProps) {
+  const tight = compact || webFit;
+  const labelSize = Math.round((compact ? 7 : isWeb ? 11 : 9) * scale);
+  const iconSize = compact ? 28 : isWeb ? 44 : 40;
 
   return (
-    <View style={[styles.footer, isWide && styles.footerWide, compact && styles.footerCompact]}>
+    <View
+      style={[
+        styles.footer,
+        isWide && styles.footerWide,
+        tight && styles.footerCompact,
+      ]}
+    >
       {FEATURES.map((feature) => (
         <View
           key={feature.label}
@@ -39,11 +55,13 @@ export default function Footer({ scale, isWide, isTablet, compact = false }: Foo
           >
             <Ionicons
               name={feature.icon}
-              size={(compact ? 12 : 18) * scale}
+              size={(compact ? 12 : isWeb ? 20 : 18) * scale}
               color={colors.gold}
             />
           </View>
-          <Text style={[styles.featureLabel, { fontSize: labelSize }]}>{feature.label}</Text>
+          <Text style={[styles.featureLabel, { fontSize: labelSize }]}>
+            {feature.label}
+          </Text>
         </View>
       ))}
     </View>
@@ -66,8 +84,9 @@ const styles = StyleSheet.create({
     flexWrap: 'nowrap',
   },
   footerCompact: {
-    marginTop: 6,
-    paddingTop: 6,
+    marginTop: 8,
+    paddingTop: 8,
+    paddingBottom: 4,
     gap: 4,
   },
   feature: {

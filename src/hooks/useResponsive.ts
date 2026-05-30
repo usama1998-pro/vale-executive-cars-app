@@ -1,43 +1,118 @@
-import { useWindowDimensions } from 'react-native';
+import { Platform, StatusBar, useWindowDimensions } from 'react-native';
 
 const TABLET_MIN = 600;
 const WIDE_MIN = 900;
+const WEB_WIDE_MIN = 768;
 const LANDSCAPE_FIT_HEIGHT = 520;
+const PHONE_LANDSCAPE_FIT_HEIGHT = 920;
+const FIT_EDGE_PADDING = 16;
 
 export function useResponsive() {
   const { width, height } = useWindowDimensions();
+  const isWeb = Platform.OS === 'web';
   const shortest = Math.min(width, height);
   const isLandscape = width > height;
-  const isTabletDevice = shortest >= TABLET_MIN;
-  const isTabletLayout = isTabletDevice || (isLandscape && width >= TABLET_MIN);
+  const webWide = isWeb && width >= WEB_WIDE_MIN;
+  const isTabletDevice = isWeb ? webWide : shortest >= TABLET_MIN;
+  const isTabletLayout = isTabletDevice;
   const isMobile = !isTabletLayout;
+  const isPhoneLandscape =
+    !isWeb && isLandscape && isMobile && width >= TABLET_MIN;
   const isWide =
-    isTabletLayout && (isLandscape ? width >= TABLET_MIN : width >= WIDE_MIN);
-  const fitToScreen = isWide && isLandscape;
-  const baseScale = Math.min(Math.max(shortest / 768, 0.85), 1.25);
+    webWide ||
+    isPhoneLandscape ||
+    (isTabletLayout && (isLandscape ? width >= TABLET_MIN : width >= WIDE_MIN));
+
+  const webFit = isWeb && webWide;
+  const nativeFit =
+    !isWeb && isLandscape && isWide && (isTabletDevice || isPhoneLandscape);
+  const fitToScreen = webFit || nativeFit;
+
+  const statusBarInset =
+    Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) : 0;
+  const fitPaddingTop = fitToScreen
+    ? isWeb
+      ? 16
+      : statusBarInset + (isPhoneLandscape ? 6 : FIT_EDGE_PADDING)
+    : 0;
+  const fitPaddingBottom = fitToScreen
+    ? isWeb
+      ? 12
+      : isPhoneLandscape
+        ? 8
+        : FIT_EDGE_PADDING + 12
+    : 0;
+  const fitContentHeight = height - fitPaddingTop - fitPaddingBottom;
+
+  const baseScale = isWeb
+    ? Math.min(Math.max(height / 800, 0.75), 1.15)
+    : Math.min(Math.max(shortest / 768, 0.85), 1.25);
+
   const layoutScale = fitToScreen
-    ? Math.min(baseScale, Math.max(0.55, height / LANDSCAPE_FIT_HEIGHT))
+    ? isWeb
+      ? Math.min(baseScale, Math.max(0.65, fitContentHeight / 820))
+      : Math.min(
+          baseScale,
+          Math.max(
+            isPhoneLandscape ? 0.34 : 0.55,
+            fitContentHeight /
+              (isPhoneLandscape
+                ? PHONE_LANDSCAPE_FIT_HEIGHT
+                : LANDSCAPE_FIT_HEIGHT),
+          ),
+        )
     : baseScale;
 
-  const contentPadding = isTabletLayout ? spacingFor(layoutScale, 20, 32) : 16;
+  const contentPadding = fitToScreen
+    ? isWeb
+      ? Math.round(Math.max(16, width * 0.02))
+      : isPhoneLandscape
+        ? 8
+        : spacingFor(layoutScale, 20, 32)
+    : isTabletLayout
+      ? spacingFor(layoutScale, 20, 32)
+      : isWeb
+        ? 20
+        : 16;
+
   const screenPaddingTop = fitToScreen
-    ? 8
-    : isMobile
-      ? 32
-      : spacingFor(layoutScale, 28, 40);
+    ? fitPaddingTop
+    : isWeb
+      ? 24
+      : isMobile
+        ? 32
+        : spacingFor(layoutScale, 28, 40);
+
   const screenPaddingBottom = fitToScreen
-    ? 8
-    : isMobile
-      ? 56
-      : screenPaddingTop;
-  const columnGap = fitToScreen ? 10 : isWide ? spacingFor(layoutScale, 20, 28) : 16;
-  const maxContentWidth = isWide ? Math.min(width * 0.96, 1400) : width;
+    ? fitPaddingBottom
+    : isWeb
+      ? 24
+      : isMobile
+        ? 56
+        : screenPaddingTop;
+
+  const columnGap = fitToScreen
+    ? isWeb
+      ? Math.round(16 * layoutScale)
+      : isPhoneLandscape
+        ? 6
+        : 10
+    : isWide
+      ? spacingFor(layoutScale, 20, 28)
+      : 16;
+
+  const maxContentWidth = isWide
+    ? Math.min(width * 0.96, isWeb ? 1400 : 1400)
+    : width;
 
   return {
     width,
     height,
+    isWeb,
+    webWide,
     isTablet: isTabletLayout,
     isTabletDevice,
+    isPhoneLandscape,
     isMobile,
     isWide,
     isLandscape,

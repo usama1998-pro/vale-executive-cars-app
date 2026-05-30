@@ -8,7 +8,7 @@ type GoldButtonProps = {
   icon?: keyof typeof Ionicons.glyphMap;
   variant?: 'filled' | 'outline';
   scale?: number;
-  style?: ViewStyle;
+  style?: ViewStyle | (ViewStyle | false | undefined)[];
 };
 
 export default function GoldButton({
@@ -44,7 +44,7 @@ export default function GoldButton({
         style={[
           styles.label,
           {
-            fontSize: Math.round(isFilled ? 15 : 13 * scale),
+            fontSize: Math.round(Math.max((isFilled ? 15 : 13) * scale, isFilled ? 13 : 11)),
             color: isFilled ? colors.buttonText : colors.gold,
           },
         ]}
