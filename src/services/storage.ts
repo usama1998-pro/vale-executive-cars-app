@@ -19,6 +19,7 @@ function normalizeBooking(item: Partial<BookingDetails>): BookingDetails {
       (item as { preferredTime?: string }).preferredTime ??
       '',
     distanceMiles: item.distanceMiles ?? 0,
+    distanceKm: item.distanceKm ?? item.distanceMiles ?? 0,
     vehicleType: item.vehicleType ?? 'executive',
     estimatedFare: item.estimatedFare ?? 0,
     status: item.status ?? 'pending',

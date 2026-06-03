@@ -23,7 +23,7 @@ export default function BookingForm({
   fill = false,
   isWeb = false,
 }: BookingFormProps) {
-  const { form, updateForm, goToEstimate } = useBooking();
+  const { form, updateForm, goToEstimate, isCalculatingQuote } = useBooking();
   const [isLocatingPickup, setIsLocatingPickup] = useState(false);
 
   const fillPickupWithCurrentLocation = useCallback(async () => {
@@ -199,11 +199,13 @@ export default function BookingForm({
       />
 
       <GoldButton
-        label="GET ESTIMATE"
+        label={isCalculatingQuote ? 'CALCULATING…' : 'GET ESTIMATE'}
         icon="car-sport-outline"
         scale={scale}
         style={tight ? styles.submitButtonTight : styles.submitButton}
         onPress={goToEstimate}
+        loading={isCalculatingQuote}
+        disabled={isCalculatingQuote}
       />
     </>
   );

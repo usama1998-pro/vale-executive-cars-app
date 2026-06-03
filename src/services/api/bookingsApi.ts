@@ -73,6 +73,7 @@ export function mapApiBookingToDetails(row: ApiBookingResponse): BookingDetails 
     to: row.to,
     preferredPickupAt: row.preferredPickupAt,
     distanceMiles: row.distanceMiles,
+    distanceKm: row.distanceMiles,
     vehicleType: row.vehicleType as BookingDetails['vehicleType'],
     estimatedFare: row.estimatedFare,
     status: mapApiStatusToApp(row.status),

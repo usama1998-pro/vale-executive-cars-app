@@ -12,7 +12,10 @@ export type BookingDetails = {
   via: string;
   to: string;
   preferredPickupAt: string;
+  distanceKm: number;
+  /** Legacy API field name; booking API stores km in `distanceMiles`. */
   distanceMiles: number;
+  durationMinutes?: number;
   vehicleType: VehicleType;
   estimatedFare: number;
   status: BookingStatus;

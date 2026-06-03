@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
+import { ActivityIndicator, Pressable, StyleSheet, Text, ViewStyle } from 'react-native';
 import { colors, radius } from '../../theme';
 
 type GoldButtonProps = {
@@ -9,6 +9,8 @@ type GoldButtonProps = {
   variant?: 'filled' | 'outline';
   scale?: number;
   style?: ViewStyle | (ViewStyle | false | undefined)[];
+  disabled?: boolean;
+  loading?: boolean;
 };
 
 export default function GoldButton({
@@ -18,21 +20,32 @@ export default function GoldButton({
   variant = 'filled',
   scale = 1,
   style,
+  disabled = false,
+  loading = false,
 }: GoldButtonProps) {
   const isFilled = variant === 'filled';
+  const isDisabled = disabled || loading;
 
   return (
     <Pressable
-      onPress={onPress}
+      onPress={isDisabled ? undefined : onPress}
+      disabled={isDisabled}
       style={({ pressed }) => [
         styles.base,
         isFilled ? styles.filled : styles.outline,
         { paddingVertical: Math.round(12 * scale), paddingHorizontal: Math.round(16 * scale) },
-        pressed && styles.pressed,
+        pressed && !isDisabled && styles.pressed,
+        isDisabled && styles.disabled,
         style,
       ]}
     >
-      {icon ? (
+      {loading ? (
+        <ActivityIndicator
+          size="small"
+          color={isFilled ? colors.buttonText : colors.gold}
+          style={styles.icon}
+        />
+      ) : icon ? (
         <Ionicons
           name={icon}
           size={Math.round(18 * scale)}
@@ -73,6 +86,9 @@ const styles = StyleSheet.create({
   },
   pressed: {
     opacity: 0.85,
+  },
+  disabled: {
+    opacity: 0.55,
   },
   icon: {
     marginRight: 8,

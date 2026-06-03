@@ -94,9 +94,7 @@ export default function ReviewBookingScreen() {
           <DetailRow label="Vehicle" value={getVehicleLabel(pendingBooking.vehicleType)} />
           <DetailRow
             label="Distance"
-            value={`${pendingBooking.distanceMiles} mile${
-              pendingBooking.distanceMiles === 1 ? '' : 's'
-            }`}
+            value={`${pendingBooking.distanceKm} km`}
           />
         </View>
 

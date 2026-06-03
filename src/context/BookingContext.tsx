@@ -9,6 +9,7 @@ import {
 } from 'react';
 import { Alert } from 'react-native';
 import { createBookingOnApi } from '../services/api/bookingsApi';
+import { fetchRouteQuote } from '../services/api/routingApi';
 import {
   clearBookingCache,
   getLastBookingForm,
@@ -36,6 +37,8 @@ type BookingContextValue = {
   submittedBooking: BookingDetails | null;
   isCheckingAvailability: boolean;
   isSubmitting: boolean;
+  isCalculatingQuote: boolean;
+  quoteFares: Record<VehicleType, number> | null;
   customers: BookingDetails[];
   updateForm: (patch: Partial<BookingFormData>) => void;
   goToEstimate: () => Promise<void>;
@@ -43,7 +46,6 @@ type BookingContextValue = {
   goBackToEstimate: () => void;
   goHome: () => void;
   goHomeAndClearCache: () => Promise<void>;
-  updatePendingMiles: (miles: number) => void;
   updatePendingVehicle: (vehicle: VehicleType) => void;
   submitBookingRequest: () => Promise<void>;
 };
@@ -66,6 +68,10 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const [isCheckingAvailability] = useState(false);
   const [customers, setCustomers] = useState<BookingDetails[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isCalculatingQuote, setIsCalculatingQuote] = useState(false);
+  const [quoteFares, setQuoteFares] = useState<Record<VehicleType, number> | null>(
+    null,
+  );
 
   useEffect(() => {
     (async () => {
@@ -123,31 +129,65 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
     await saveLastBookingForm({ ...form, ...trimmed });
 
-    const defaultMiles = 5;
     const vehicleType: VehicleType = 'executive';
     const booking: BookingDetails = {
       id: createLocalId(),
       bookingRef: '',
       ...trimmed,
-      distanceMiles: defaultMiles,
+      distanceMiles: 0,
+      distanceKm: 0,
       vehicleType,
-      estimatedFare: calculateFare(defaultMiles, vehicleType),
+      estimatedFare: 0,
       status: 'draft',
       createdAt: new Date().toISOString(),
     };
 
+    setQuoteFares(null);
     setPendingBooking(booking);
     setScreen('estimate');
+    setIsCalculatingQuote(true);
+
+    try {
+      const quote = await fetchRouteQuote({
+        from: trimmed.from,
+        to: trimmed.to,
+        via: trimmed.via !== 'car' ? trimmed.via : undefined,
+        vehicleType,
+      });
+
+      setQuoteFares(quote.fares);
+      setPendingBooking((prev) => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          distanceKm: quote.distanceKm,
+          distanceMiles: quote.distanceKm,
+          durationMinutes: quote.durationMinutes,
+          vehicleType,
+          estimatedFare: quote.fares[vehicleType],
+        };
+      });
+    } catch (error) {
+      Alert.alert('Estimate failed', formatApiErrorMessage(error));
+      setPendingBooking(null);
+      setQuoteFares(null);
+      setScreen('home');
+    } finally {
+      setIsCalculatingQuote(false);
+    }
   }, [form]);
 
   const goToReview = useCallback(() => {
-    if (!pendingBooking) return;
-    if (pendingBooking.distanceMiles <= 0) {
-      Alert.alert('Distance required', 'Please enter the journey distance in miles.');
+    if (!pendingBooking || isCalculatingQuote) return;
+    if (pendingBooking.distanceKm <= 0) {
+      Alert.alert(
+        'Estimate required',
+        'Please wait for the route estimate to finish calculating.',
+      );
       return;
     }
     setScreen('review');
-  }, [pendingBooking]);
+  }, [pendingBooking, isCalculatingQuote]);
 
   const goBackToEstimate = useCallback(() => {
     setScreen('estimate');
@@ -156,6 +196,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const goHome = useCallback(() => {
     setPendingBooking(null);
     setSubmittedBooking(null);
+    setQuoteFares(null);
+    setIsCalculatingQuote(false);
     setScreen('home');
   }, []);
 
@@ -165,19 +207,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     setCustomers([]);
     setPendingBooking(null);
     setSubmittedBooking(null);
+    setQuoteFares(null);
+    setIsCalculatingQuote(false);
     setScreen('home');
-  }, []);
-
-  const updatePendingMiles = useCallback((miles: number) => {
-    setPendingBooking((prev) => {
-      if (!prev) return prev;
-      const distanceMiles = Math.max(0, miles);
-      return {
-        ...prev,
-        distanceMiles,
-        estimatedFare: calculateFare(distanceMiles, prev.vehicleType),
-      };
-    });
   }, []);
 
   const updatePendingVehicle = useCallback((vehicleType: VehicleType) => {
@@ -186,10 +218,12 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       return {
         ...prev,
         vehicleType,
-        estimatedFare: calculateFare(prev.distanceMiles, vehicleType),
+        estimatedFare:
+          quoteFares?.[vehicleType] ??
+          calculateFare(prev.distanceKm / 1.609344, vehicleType),
       };
     });
-  }, []);
+  }, [quoteFares]);
 
   const submitBookingRequest = useCallback(async () => {
     if (!pendingBooking || isSubmitting) return;
@@ -203,7 +237,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         from: pendingBooking.from,
         to: pendingBooking.to,
         via: pendingBooking.via || 'car',
-        distanceMiles: Math.round(pendingBooking.distanceMiles),
+        distanceMiles: Math.round(pendingBooking.distanceKm),
         estimatedFare: Math.round(pendingBooking.estimatedFare),
         vehicleType: pendingBooking.vehicleType,
         preferredPickupAt: pendingBooking.preferredPickupAt,
@@ -232,6 +266,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       submittedBooking,
       isCheckingAvailability,
       isSubmitting,
+      isCalculatingQuote,
+      quoteFares,
       customers,
       updateForm,
       goToEstimate,
@@ -239,7 +275,6 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       goBackToEstimate,
       goHome,
       goHomeAndClearCache,
-      updatePendingMiles,
       updatePendingVehicle,
       submitBookingRequest,
     }),
@@ -250,6 +285,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       submittedBooking,
       isCheckingAvailability,
       isSubmitting,
+      isCalculatingQuote,
+      quoteFares,
       customers,
       updateForm,
       goToEstimate,
@@ -257,7 +294,6 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       goBackToEstimate,
       goHome,
       goHomeAndClearCache,
-      updatePendingMiles,
       updatePendingVehicle,
       submitBookingRequest,
     ],
