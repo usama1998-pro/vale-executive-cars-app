@@ -2,6 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import { useRef } from 'react';
 import {
+  Image,
+  ImageSourcePropType,
   KeyboardAvoidingView,
   Platform,
   Pressable,
@@ -13,6 +15,7 @@ import {
 import FormInput from '../components/booking/FormInput';
 import GoldButton from '../components/booking/GoldButton';
 import Screen from '../components/Screen';
+import { VEHICLE_IMAGES } from '../constants/vehicleImages';
 import { useBooking } from '../context/BookingContext';
 import { useKeyboardPadding } from '../hooks/useKeyboardPadding';
 import { useResponsive } from '../hooks/useResponsive';
@@ -20,10 +23,16 @@ import { VehicleType } from '../types/booking';
 import { colors, radius, spacing } from '../theme';
 import { calculateFare, formatGBP, PRICING } from '../utils/pricing';
 
-const VEHICLES: { type: VehicleType; title: string; lines: string[] }[] = [
+const VEHICLES: {
+  type: VehicleType;
+  title: string;
+  lines: string[];
+  image: ImageSourcePropType;
+}[] = [
   {
     type: 'saloon',
     title: PRICING.saloon.label,
+    image: VEHICLE_IMAGES.saloon,
     lines: [
       'First 3 miles charged at £5 per mile',
       'Any additional miles charged at £3 per mile',
@@ -32,11 +41,13 @@ const VEHICLES: { type: VehicleType; title: string; lines: string[] }[] = [
   {
     type: 'executive',
     title: PRICING.executive.label,
+    image: VEHICLE_IMAGES.executive,
     lines: ['Charged at £5 per mile'],
   },
   {
     type: 'mpv',
     title: PRICING.mpv.label,
+    image: VEHICLE_IMAGES.mpv,
     lines: ['Charged at 1.5× the Executive rate'],
   },
 ];
@@ -124,6 +135,7 @@ export default function EstimateScreen() {
             {VEHICLES.map((vehicle) => {
               const selected = pendingBooking.vehicleType === vehicle.type;
               const previewFare = calculateFare(pendingBooking.distanceMiles, vehicle.type);
+              const imageHeight = Math.round((isWide ? 140 : 165) * scale);
               return (
                 <Pressable
                   key={vehicle.type}
@@ -135,6 +147,12 @@ export default function EstimateScreen() {
                   ]}
                   onPress={() => updatePendingVehicle(vehicle.type)}
                 >
+                  <Image
+                    source={vehicle.image}
+                    style={[styles.vehicleImage, { height: imageHeight }]}
+                    resizeMode="contain"
+                    accessibilityLabel={`${vehicle.title} vehicle`}
+                  />
                   <View style={styles.priceCardHeader}>
                     <Text style={styles.priceCardTitle}>{vehicle.title}</Text>
                     {selected ? (
@@ -311,6 +329,10 @@ const styles = StyleSheet.create({
   priceCardSelected: {
     borderColor: colors.goldLight,
     backgroundColor: colors.backgroundPanel,
+  },
+  vehicleImage: {
+    width: '100%',
+    marginBottom: spacing.sm,
   },
   priceCardHeader: {
     flexDirection: 'row',

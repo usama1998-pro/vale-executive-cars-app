@@ -62,7 +62,6 @@ export default function PreferredPickupPicker({
   const iconSize = Math.round(18 * scale);
   const fontSize = Math.round(14 * scale);
   const labelSize = Math.round(11 * scale);
-
   const selectorHeight = Math.round((dense ? 28 : 44) * scale);
 
   return (

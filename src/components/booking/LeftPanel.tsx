@@ -341,7 +341,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   qrImage: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.yellow,
     borderRadius: radius.sm,
   },
   partnership: {

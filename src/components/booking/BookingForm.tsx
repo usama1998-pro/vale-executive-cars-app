@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useBooking } from '../../context/BookingContext';
 import { colors, radius, spacing } from '../../theme';
+import { getCurrentLocationAddress } from '../../utils/location';
 import FormInput from './FormInput';
 import GoldButton from './GoldButton';
 import PreferredPickupPicker from './PreferredPickupPicker';
@@ -22,6 +24,29 @@ export default function BookingForm({
   isWeb = false,
 }: BookingFormProps) {
   const { form, updateForm, goToEstimate } = useBooking();
+  const [isLocatingPickup, setIsLocatingPickup] = useState(false);
+
+  const fillPickupWithCurrentLocation = useCallback(async () => {
+    setIsLocatingPickup(true);
+    try {
+      const address = await getCurrentLocationAddress();
+      if (address) {
+        updateForm({ from: address });
+      } else {
+        Alert.alert(
+          'Location unavailable',
+          'Allow location access or enter your pickup address manually.',
+        );
+      }
+    } catch {
+      Alert.alert(
+        'Location error',
+        'Could not get your current location. Please enter your pickup address manually.',
+      );
+    } finally {
+      setIsLocatingPickup(false);
+    }
+  }, [updateForm]);
 
   const webFit = isWeb && fill;
   const tight = compact || dense || webFit;
@@ -138,9 +163,12 @@ export default function BookingForm({
         webFit={webFit}
         inputGap={inputGap}
         icon="location-outline"
-        placeholder="From"
+        trailingIcon={isLocatingPickup ? 'hourglass-outline' : 'navigate-outline'}
+        onTrailingPress={isLocatingPickup ? undefined : fillPickupWithCurrentLocation}
+        placeholder="Pickup"
         value={form.from}
         onChangeText={(from) => updateForm({ from })}
+        editable={!isLocatingPickup}
       />
       <FormInput
         scale={scale}

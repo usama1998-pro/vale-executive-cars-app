@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import AnimatedSuccessTick from '../components/booking/AnimatedSuccessTick';
 import GoldButton from '../components/booking/GoldButton';
 import Screen from '../components/Screen';
 import { useBooking } from '../context/BookingContext';
@@ -11,7 +12,7 @@ import { formatPreferredPickup } from '../utils/dateTime';
 import { formatGBP } from '../utils/pricing';
 
 export default function BookingStatusScreen() {
-  const { submittedBooking, goHomeAndClearCache, isCheckingAvailability } = useBooking();
+  const { submittedBooking, goHomeAndClearCache } = useBooking();
   const { scale, contentPadding, screenPaddingTop, screenPaddingBottom } = useResponsive();
 
   if (!submittedBooking) {
@@ -22,22 +23,22 @@ export default function BookingStatusScreen() {
 
   const statusConfig = {
     pending: {
-      icon: 'time-outline' as const,
-      title: 'REQUEST SUBMITTED',
+      icon: 'checkmark-circle-outline' as const,
+      title: 'BOOKING SUBMITTED',
       message: BOOKING_MESSAGES.pending,
-      color: colors.gold,
+      color: colors.yellow,
     },
     accepted: {
       icon: 'checkmark-circle-outline' as const,
       title: 'BOOKING ACCEPTED',
       message: BOOKING_MESSAGES.accepted,
-      color: '#4ade80',
+      color: colors.yellow,
     },
     declined: {
       icon: 'close-circle-outline' as const,
       title: 'UNAVAILABLE',
       message: BOOKING_MESSAGES.declined,
-      color: '#f87171',
+      color: colors.yellow,
     },
     draft: {
       icon: 'document-outline' as const,
@@ -48,6 +49,7 @@ export default function BookingStatusScreen() {
   };
 
   const config = statusConfig[status] ?? statusConfig.pending;
+  const showSuccessTick = status === 'pending' || status === 'accepted';
 
   return (
     <Screen style={styles.screen}>
@@ -63,8 +65,8 @@ export default function BookingStatusScreen() {
         ]}
       >
         <View style={styles.iconWrap}>
-          {isCheckingAvailability ? (
-            <ActivityIndicator size="large" color={colors.gold} />
+          {showSuccessTick ? (
+            <AnimatedSuccessTick size={Math.round(80 * scale)} ringColor={config.color} />
           ) : (
             <Ionicons name={config.icon} size={56} color={config.color} />
           )}
@@ -72,6 +74,13 @@ export default function BookingStatusScreen() {
 
         <Text style={[styles.title, { fontSize: Math.round(22 * scale) }]}>{config.title}</Text>
         <Text style={styles.message}>{config.message}</Text>
+
+        {status === 'pending' ? (
+          <View style={styles.noticeCard}>
+            <Ionicons name="notifications-outline" size={22} color={colors.gold} />
+            <Text style={styles.noticeText}>{BOOKING_MESSAGES.pendingNotice}</Text>
+          </View>
+        ) : null}
 
         <View style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>BOOKING REFERENCE</Text>
@@ -90,19 +99,13 @@ export default function BookingStatusScreen() {
           </Text>
         </View>
 
-        {status === 'pending' && isCheckingAvailability ? (
-          <Text style={styles.checkingNote}>Checking availability with our operators…</Text>
-        ) : null}
-
-        {status !== 'pending' ? (
-          <GoldButton
-            label="BACK TO HOME"
-            icon="home-outline"
-            scale={scale}
-            onPress={goHomeAndClearCache}
-            style={styles.homeButton}
-          />
-        ) : null}
+        <GoldButton
+          label="BACK TO HOME"
+          icon="home-outline"
+          scale={scale}
+          onPress={goHomeAndClearCache}
+          style={styles.homeButton}
+        />
       </ScrollView>
     </Screen>
   );
@@ -120,8 +123,9 @@ const styles = StyleSheet.create({
   iconWrap: {
     marginTop: spacing.lg,
     marginBottom: spacing.lg,
-    height: 64,
+    minHeight: 88,
     justifyContent: 'center',
+    alignItems: 'center',
   },
   title: {
     color: colors.goldLight,
@@ -136,6 +140,24 @@ const styles = StyleSheet.create({
     lineHeight: 22,
     marginBottom: spacing.lg,
     paddingHorizontal: spacing.sm,
+  },
+  noticeCard: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    backgroundColor: colors.backgroundPanel,
+    marginBottom: spacing.lg,
+  },
+  noticeText: {
+    flex: 1,
+    color: colors.textMuted,
+    fontSize: 14,
+    lineHeight: 20,
   },
   summaryCard: {
     width: '100%',
@@ -167,12 +189,6 @@ const styles = StyleSheet.create({
     color: colors.gold,
     fontWeight: '600',
     marginTop: spacing.sm,
-  },
-  checkingNote: {
-    color: colors.textMuted,
-    textAlign: 'center',
-    fontSize: 13,
-    marginBottom: spacing.md,
   },
   homeButton: {
     alignSelf: 'stretch',

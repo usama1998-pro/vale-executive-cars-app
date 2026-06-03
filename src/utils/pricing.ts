@@ -39,18 +39,24 @@ export function calculateMpvFare(miles: number): number {
   return calculateExecutiveFare(miles) * PRICING.mpv.multiplier;
 }
 
+/** Whole pounds (API stores `estimatedFare` as an integer). */
 export function calculateFare(miles: number, vehicleType: VehicleType): number {
   const roundedMiles = Math.max(0, miles);
+  let fare = 0;
   switch (vehicleType) {
     case 'saloon':
-      return calculateSaloonFare(roundedMiles);
+      fare = calculateSaloonFare(roundedMiles);
+      break;
     case 'executive':
-      return calculateExecutiveFare(roundedMiles);
+      fare = calculateExecutiveFare(roundedMiles);
+      break;
     case 'mpv':
-      return calculateMpvFare(roundedMiles);
+      fare = calculateMpvFare(roundedMiles);
+      break;
     default:
-      return 0;
+      fare = 0;
   }
+  return Math.round(fare);
 }
 
 export function formatGBP(amount: number): string {

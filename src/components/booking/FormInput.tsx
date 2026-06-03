@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StyleSheet, TextInput, TextInputProps, View } from 'react-native';
+import { Pressable, StyleSheet, TextInput, TextInputProps, View } from 'react-native';
 import { colors, radius } from '../../theme';
 
 type FormInputProps = TextInputProps & {
   icon?: keyof typeof Ionicons.glyphMap;
   trailingIcon?: keyof typeof Ionicons.glyphMap;
+  onTrailingPress?: () => void;
   scale?: number;
   dense?: boolean;
   webFit?: boolean;
@@ -14,6 +15,7 @@ type FormInputProps = TextInputProps & {
 export default function FormInput({
   icon,
   trailingIcon,
+  onTrailingPress,
   scale = 1,
   dense = false,
   webFit = false,
@@ -70,12 +72,23 @@ export default function FormInput({
         />
       </View>
       {trailingIcon ? (
-        <Ionicons
-          name={trailingIcon}
-          size={iconSize}
-          color={colors.gold}
-          pointerEvents="none"
-        />
+        onTrailingPress ? (
+          <Pressable
+            onPress={onTrailingPress}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Use current location"
+          >
+            <Ionicons name={trailingIcon} size={iconSize} color={colors.gold} />
+          </Pressable>
+        ) : (
+          <Ionicons
+            name={trailingIcon}
+            size={iconSize}
+            color={colors.gold}
+            pointerEvents="none"
+          />
+        )
       ) : null}
     </View>
   );

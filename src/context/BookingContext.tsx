@@ -5,22 +5,16 @@ import {
   useContext,
   useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
 import { Alert } from 'react-native';
-import { checkOperatorAvailability } from '../services/bookingRequest';
-import {
-  saveBookingToFirestore,
-  updateBookingInFirestore,
-} from '../services/firebaseBookings';
+import { createBookingOnApi } from '../services/api/bookingsApi';
 import {
   clearBookingCache,
   getLastBookingForm,
   getStoredCustomers,
   saveCustomerBooking,
   saveLastBookingForm,
-  updateCustomerBooking,
 } from '../services/storage';
 import {
   BookingDetails,
@@ -28,7 +22,9 @@ import {
   EMPTY_BOOKING_FORM,
   VehicleType,
 } from '../types/booking';
-import { createBookingRef } from '../utils/bookingRef';
+import { getDefaultPickupDate } from '../utils/dateTime';
+import { formatApiErrorMessage } from '../lib/apiErrors';
+import { getCurrentLocationAddress } from '../utils/location';
 import { calculateFare } from '../utils/pricing';
 
 export type AppScreen = 'home' | 'estimate' | 'review' | 'status';
@@ -39,6 +35,7 @@ type BookingContextValue = {
   pendingBooking: BookingDetails | null;
   submittedBooking: BookingDetails | null;
   isCheckingAvailability: boolean;
+  isSubmitting: boolean;
   customers: BookingDetails[];
   updateForm: (patch: Partial<BookingFormData>) => void;
   goToEstimate: () => Promise<void>;
@@ -53,8 +50,12 @@ type BookingContextValue = {
 
 const BookingContext = createContext<BookingContextValue | null>(null);
 
-function createId() {
+function createLocalId() {
   return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function isValidEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
 }
 
 export function BookingProvider({ children }: { children: ReactNode }) {
@@ -62,9 +63,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const [form, setForm] = useState<BookingFormData>(EMPTY_BOOKING_FORM);
   const [pendingBooking, setPendingBooking] = useState<BookingDetails | null>(null);
   const [submittedBooking, setSubmittedBooking] = useState<BookingDetails | null>(null);
-  const [isCheckingAvailability, setIsCheckingAvailability] = useState(false);
+  const [isCheckingAvailability] = useState(false);
   const [customers, setCustomers] = useState<BookingDetails[]>([]);
-  const checkAbortRef = useRef(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -72,15 +73,18 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         getLastBookingForm(),
         getStoredCustomers(),
       ]);
-      setForm(savedForm);
+
+      let from = savedForm.from;
+      if (!from.trim()) {
+        const address = await getCurrentLocationAddress();
+        if (address) {
+          from = address;
+        }
+      }
+
+      setForm({ ...savedForm, from });
       setCustomers(savedCustomers);
     })();
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      checkAbortRef.current = true;
-    };
   }, []);
 
   const updateForm = useCallback((patch: Partial<BookingFormData>) => {
@@ -93,16 +97,27 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       contactNumber: form.contactNumber.trim(),
       email: form.email.trim(),
       from: form.from.trim(),
-      via: form.via.trim(),
+      via: form.via.trim() || 'car',
       to: form.to.trim(),
-      preferredPickupAt: form.preferredPickupAt,
+      preferredPickupAt:
+        form.preferredPickupAt.trim() || getDefaultPickupDate().toISOString(),
     };
 
-    if (!trimmed.customerName || !trimmed.contactNumber || !trimmed.from || !trimmed.to) {
+    if (
+      !trimmed.customerName ||
+      !trimmed.contactNumber ||
+      !trimmed.from ||
+      !trimmed.to
+    ) {
       Alert.alert(
         'Missing details',
         'Please enter your name, contact number, and journey from/to locations.',
       );
+      return;
+    }
+
+    if (!trimmed.email || !isValidEmail(trimmed.email)) {
+      Alert.alert('Email required', 'Please enter a valid email address.');
       return;
     }
 
@@ -111,8 +126,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     const defaultMiles = 5;
     const vehicleType: VehicleType = 'executive';
     const booking: BookingDetails = {
-      id: createId(),
-      bookingRef: createBookingRef(),
+      id: createLocalId(),
+      bookingRef: '',
       ...trimmed,
       distanceMiles: defaultMiles,
       vehicleType,
@@ -139,16 +154,12 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const goHome = useCallback(() => {
-    checkAbortRef.current = true;
-    setIsCheckingAvailability(false);
     setPendingBooking(null);
     setSubmittedBooking(null);
     setScreen('home');
   }, []);
 
   const goHomeAndClearCache = useCallback(async () => {
-    checkAbortRef.current = true;
-    setIsCheckingAvailability(false);
     await clearBookingCache();
     setForm(EMPTY_BOOKING_FORM);
     setCustomers([]);
@@ -180,64 +191,38 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  const runAvailabilityCheck = useCallback(async (booking: BookingDetails) => {
-    checkAbortRef.current = false;
-    setIsCheckingAvailability(true);
+  const submitBookingRequest = useCallback(async () => {
+    if (!pendingBooking || isSubmitting) return;
 
-    const result = await checkOperatorAvailability(booking);
-    if (checkAbortRef.current) return;
+    setIsSubmitting(true);
+    try {
+      const submitted = await createBookingOnApi({
+        customerName: pendingBooking.customerName,
+        email: pendingBooking.email,
+        contactNumber: pendingBooking.contactNumber,
+        from: pendingBooking.from,
+        to: pendingBooking.to,
+        via: pendingBooking.via || 'car',
+        distanceMiles: Math.round(pendingBooking.distanceMiles),
+        estimatedFare: Math.round(pendingBooking.estimatedFare),
+        vehicleType: pendingBooking.vehicleType,
+        preferredPickupAt: pendingBooking.preferredPickupAt,
+        submittedAt: new Date().toISOString(),
+      });
 
-    const resolvedAt = new Date().toISOString();
-    const updated = await updateCustomerBooking(booking.id, {
-      status: result,
-      resolvedAt,
-    });
+      await saveCustomerBooking(submitted);
+      setSubmittedBooking(submitted);
+      setPendingBooking(null);
+      setScreen('status');
 
-    if (updated) {
-      setSubmittedBooking(updated);
       const savedCustomers = await getStoredCustomers();
       setCustomers(savedCustomers);
-      try {
-        await updateBookingInFirestore(booking.id, {
-          status: result,
-          resolvedAt,
-        });
-      } catch {
-        // Local status is updated; cloud sync can be retried from console if needed.
-      }
+    } catch (error) {
+      Alert.alert('Booking failed', formatApiErrorMessage(error));
+    } finally {
+      setIsSubmitting(false);
     }
-
-    setIsCheckingAvailability(false);
-  }, []);
-
-  const submitBookingRequest = useCallback(async () => {
-    if (!pendingBooking) return;
-
-    const submitted: BookingDetails = {
-      ...pendingBooking,
-      status: 'pending',
-      submittedAt: new Date().toISOString(),
-    };
-
-    try {
-      await saveBookingToFirestore(submitted);
-    } catch {
-      Alert.alert(
-        'Cloud sync issue',
-        'Your booking was saved on this device but could not be sent to Firebase. Please check your internet connection.',
-      );
-    }
-
-    await saveCustomerBooking(submitted);
-    setSubmittedBooking(submitted);
-    setPendingBooking(null);
-    setScreen('status');
-
-    const savedCustomers = await getStoredCustomers();
-    setCustomers(savedCustomers);
-
-    runAvailabilityCheck(submitted);
-  }, [pendingBooking, runAvailabilityCheck]);
+  }, [pendingBooking, isSubmitting]);
 
   const value = useMemo(
     () => ({
@@ -246,6 +231,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       pendingBooking,
       submittedBooking,
       isCheckingAvailability,
+      isSubmitting,
       customers,
       updateForm,
       goToEstimate,
@@ -263,6 +249,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       pendingBooking,
       submittedBooking,
       isCheckingAvailability,
+      isSubmitting,
       customers,
       updateForm,
       goToEstimate,

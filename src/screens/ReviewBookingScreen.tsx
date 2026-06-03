@@ -1,6 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { VEHICLE_IMAGES } from '../constants/vehicleImages';
 import GoldButton from '../components/booking/GoldButton';
 import Screen from '../components/Screen';
 import { useBooking } from '../context/BookingContext';
@@ -20,7 +21,8 @@ function DetailRow({ label, value }: { label: string; value: string }) {
 }
 
 export default function ReviewBookingScreen() {
-  const { pendingBooking, goBackToEstimate, submitBookingRequest } = useBooking();
+  const { pendingBooking, goBackToEstimate, submitBookingRequest, isSubmitting } =
+    useBooking();
   const { scale, contentPadding, screenPaddingTop, screenPaddingBottom } = useResponsive();
 
   if (!pendingBooking) {
@@ -54,7 +56,9 @@ export default function ReviewBookingScreen() {
 
         <View style={styles.refCard}>
           <Text style={styles.refLabel}>BOOKING REFERENCE</Text>
-          <Text style={styles.refValue}>{pendingBooking.bookingRef}</Text>
+          <Text style={styles.refValue}>
+            {pendingBooking.bookingRef || 'Assigned when you confirm'}
+          </Text>
         </View>
 
         <View style={styles.sectionCard}>
@@ -66,7 +70,7 @@ export default function ReviewBookingScreen() {
 
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>JOURNEY DETAILS</Text>
-          <DetailRow label="From" value={pendingBooking.from} />
+          <DetailRow label="Pickup" value={pendingBooking.from} />
           <DetailRow label="Via" value={pendingBooking.via} />
           <DetailRow label="To" value={pendingBooking.to} />
           <DetailRow
@@ -81,6 +85,12 @@ export default function ReviewBookingScreen() {
 
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>SELECTED OPTIONS</Text>
+          <Image
+            source={VEHICLE_IMAGES[pendingBooking.vehicleType]}
+            style={[styles.vehicleImage, { height: Math.round(165 * scale) }]}
+            resizeMode="contain"
+            accessibilityLabel={`${getVehicleLabel(pendingBooking.vehicleType)} vehicle`}
+          />
           <DetailRow label="Vehicle" value={getVehicleLabel(pendingBooking.vehicleType)} />
           <DetailRow
             label="Distance"
@@ -98,11 +108,11 @@ export default function ReviewBookingScreen() {
         </View>
 
         <GoldButton
-          label="CONFIRM BOOKING"
+          label={isSubmitting ? 'SUBMITTING…' : 'CONFIRM BOOKING'}
           icon="checkmark-circle-outline"
           scale={scale}
           style={styles.confirmButton}
-          onPress={submitBookingRequest}
+          onPress={isSubmitting ? undefined : submitBookingRequest}
         />
       </ScrollView>
     </Screen>
@@ -174,6 +184,10 @@ const styles = StyleSheet.create({
     color: colors.gold,
     fontWeight: '700',
     letterSpacing: 1,
+    marginBottom: spacing.sm,
+  },
+  vehicleImage: {
+    width: '100%',
     marginBottom: spacing.sm,
   },
   detailRow: {

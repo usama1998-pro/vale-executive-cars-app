@@ -43,7 +43,9 @@ export const EMPTY_BOOKING_FORM: BookingFormData = {
 
 export const BOOKING_MESSAGES = {
   pending:
-    'Your booking request has been submitted. We are checking driver availability and will update you shortly.',
+    'Your booking has been submitted successfully. Our team will review your request and be in touch soon.',
+  pendingNotice:
+    'Please check your WhatsApp and email for your booking confirmation and any updates from us.',
   accepted:
     'Your booking has been accepted. Our team will confirm your journey details with you shortly.',
   declined:

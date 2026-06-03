@@ -21,7 +21,6 @@ export default function Header({
   const titleSize = Math.round(
     (compact ? 22 : isWeb && isWide ? 36 : isWide ? 32 : 26) * scale,
   );
-  const taglineSize = Math.round((compact ? 9 : isWeb ? 13 : 11) * scale);
   const logoSize = Math.round((compact ? 28 : isWeb ? 52 : 48) * scale);
 
   return (
@@ -53,13 +52,6 @@ export default function Header({
         <Text style={[styles.title, { fontSize: titleSize }]}>
           Vale Executive Cars
         </Text>
-        <View style={[styles.taglineRow, tight && styles.taglineRowCompact]}>
-          <View style={styles.taglineLine} />
-          <Text style={[styles.tagline, { fontSize: taglineSize }]}>
-            WE GO THE EXTRA MILE
-          </Text>
-          <View style={styles.taglineLine} />
-        </View>
       </View>
     </View>
   );
@@ -104,27 +96,5 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     marginTop: 8,
     textAlign: 'center',
-  },
-  taglineRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginTop: 10,
-    gap: 12,
-    width: '100%',
-    maxWidth: 420,
-    paddingHorizontal: 16,
-  },
-  taglineRowCompact: {
-    marginTop: 6,
-  },
-  taglineLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: colors.goldMuted,
-  },
-  tagline: {
-    color: colors.gold,
-    letterSpacing: 1.5,
-    fontWeight: '500',
   },
 });

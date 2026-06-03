@@ -1,14 +1,19 @@
+const green = '#011A16';
+const yellow = '#C89635';
+
 export const colors = {
-  background: '#0B2418',
-  backgroundPanel: '#0F2E1F',
-  gold: '#C9A227',
-  goldLight: '#E8D48B',
-  goldMuted: '#A68B2E',
-  text: '#F5F0E1',
-  textMuted: '#B8A88A',
-  border: '#C9A227',
-  inputBg: '#071A12',
-  buttonText: '#0B2418',
+  green,
+  yellow,
+  background: green,
+  backgroundPanel: green,
+  inputBg: green,
+  gold: yellow,
+  goldLight: yellow,
+  goldMuted: yellow,
+  border: yellow,
+  text: yellow,
+  textMuted: yellow,
+  buttonText: green,
 };
 
 export const spacing = {
