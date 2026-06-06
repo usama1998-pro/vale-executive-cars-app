@@ -2,7 +2,6 @@ import { Ionicons } from '@expo/vector-icons';
 import { StatusBar } from 'expo-status-bar';
 import {
   Image,
-  ImageSourcePropType,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,46 +13,17 @@ import GoldButton from '../components/booking/GoldButton';
 import JourneyRouteDisplay from '../components/booking/JourneyRouteDisplay';
 import Screen from '../components/Screen';
 import { VEHICLE_IMAGES } from '../constants/vehicleImages';
+import { VEHICLE_OPTIONS } from '../constants/vehicleOptions';
 import { useBooking } from '../context/BookingContext';
 import { useResponsive } from '../hooks/useResponsive';
-import { VehicleType } from '../types/booking';
 import { colors, radius, spacing } from '../theme';
-import { formatGBP, PRICING } from '../utils/pricing';
+import { formatGBP } from '../utils/pricing';
 
-const VEHICLES: {
-  type: VehicleType;
-  title: string;
-  tagline: string;
-  lines: string[];
-  image: ImageSourcePropType;
-  recommended?: boolean;
-}[] = [
-  {
-    type: 'saloon',
-    title: PRICING.saloon.label,
-    tagline: 'Comfortable everyday travel',
-    image: VEHICLE_IMAGES.saloon,
-    lines: [
-      'First 3 miles charged at £5 per mile',
-      'Any additional miles charged at £3 per mile',
-    ],
-  },
-  {
-    type: 'executive',
-    title: PRICING.executive.label,
-    tagline: 'Premium ride, business class',
-    image: VEHICLE_IMAGES.executive,
-    lines: ['Charged at £5 per mile'],
-    recommended: true,
-  },
-  {
-    type: 'mpv',
-    title: PRICING.mpv.label,
-    tagline: 'Extra space for groups & luggage',
-    image: VEHICLE_IMAGES.mpv,
-    lines: ['Charged at 1.5× the Executive rate'],
-  },
-];
+const VEHICLES = VEHICLE_OPTIONS.map((option) => ({
+  ...option,
+  image: VEHICLE_IMAGES[option.type],
+  recommended: option.type === 'executive',
+}));
 
 export default function EstimateScreen() {
   const {
@@ -246,45 +216,45 @@ export default function EstimateScreen() {
         </View>
       ) : null}
 
-      <View style={compact ? styles.compactMain : undefined}>
-      <View
-        style={[
-          styles.pricingGrid,
-          compact && styles.pricingGridFit,
-          isWide && styles.pricingGridThreeCol,
-          compact && isWide && styles.pricingGridThreeColCompact,
-          isTablet && !isWide && styles.pricingGridTwoCol,
-          { gap: columnGap },
-        ]}
-      >
-        {renderVehicleCards()}
-      </View>
-      </View>
-
-      <View style={[styles.footerRow, compact && styles.footerRowCompact]}>
-        <View style={[styles.totalCard, compact && styles.totalCardCompact]}>
-          <View style={styles.totalLeft}>
-            <Text style={[styles.totalLabel, compact && styles.totalLabelCompact]}>
-              ESTIMATED TOTAL
-            </Text>
-            <Text style={[styles.totalMeta, compact && styles.totalMetaCompact]} numberOfLines={1}>
-              {selectedVehicle?.title}
-            </Text>
-          </View>
-          <Text style={[styles.totalAmount, { fontSize: Math.round((compact ? 26 : 34) * scale) }]}>
-            {quoteReady ? formatGBP(pendingBooking.estimatedFare) : '—'}
-          </Text>
+      <View style={compact ? styles.cardsAndFooter : undefined}>
+        <View
+          style={[
+            styles.pricingGrid,
+            compact && styles.pricingGridFit,
+            isWide && styles.pricingGridThreeCol,
+            compact && isWide && styles.pricingGridThreeColCompact,
+            isTablet && !isWide && styles.pricingGridTwoCol,
+            { gap: columnGap },
+          ]}
+        >
+          {renderVehicleCards()}
         </View>
 
-        <GoldButton
-          label={isCalculatingQuote ? 'CALCULATING…' : compact ? 'REVIEW DETAILS' : 'REVIEW BOOKING DETAILS'}
-          icon="document-text-outline"
-          scale={compact ? scale * 0.88 : scale}
-          style={[styles.confirmButton, compact && styles.confirmButtonCompact]}
-          onPress={goToReview}
-          disabled={!quoteReady}
-          loading={isCalculatingQuote}
-        />
+        <View style={[styles.footerRow, compact && styles.footerRowCompact]}>
+          <View style={[styles.totalCard, compact && styles.totalCardCompact]}>
+            <View style={styles.totalLeft}>
+              <Text style={[styles.totalLabel, compact && styles.totalLabelCompact]}>
+                ESTIMATED TOTAL
+              </Text>
+              <Text style={[styles.totalMeta, compact && styles.totalMetaCompact]} numberOfLines={1}>
+                {selectedVehicle?.title}
+              </Text>
+            </View>
+            <Text style={[styles.totalAmount, { fontSize: Math.round((compact ? 26 : 34) * scale) }]}>
+              {quoteReady ? formatGBP(pendingBooking.estimatedFare) : '—'}
+            </Text>
+          </View>
+
+          <GoldButton
+            label={isCalculatingQuote ? 'CALCULATING…' : compact ? 'REVIEW DETAILS' : 'REVIEW BOOKING DETAILS'}
+            icon="document-text-outline"
+            scale={compact ? scale * 0.88 : scale}
+            style={[styles.confirmButton, compact && styles.confirmButtonCompact]}
+            onPress={goToReview}
+            disabled={!quoteReady}
+            loading={isCalculatingQuote}
+          />
+        </View>
       </View>
 
       {!compact ? (
@@ -335,9 +305,8 @@ const styles = StyleSheet.create({
   pageFit: {
     flex: 1,
     minHeight: 0,
-    justifyContent: 'space-between',
   },
-  compactMain: {
+  cardsAndFooter: {
     flex: 1,
     minHeight: 0,
     justifyContent: 'center',
@@ -391,7 +360,7 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   pricingGrid: {
-    marginBottom: spacing.lg,
+    marginBottom: 0,
   },
   pricingGridFit: {
     flexGrow: 0,
@@ -618,12 +587,14 @@ const styles = StyleSheet.create({
     marginTop: 'auto',
   },
   footerRow: {
+    marginTop: spacing.sm,
     marginBottom: spacing.sm,
   },
   footerRowCompact: {
     flexDirection: 'row',
     alignItems: 'stretch',
     gap: spacing.sm,
+    marginTop: spacing.sm,
     marginBottom: 0,
   },
   totalCard: {
