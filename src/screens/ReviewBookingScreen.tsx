@@ -71,6 +71,7 @@ export default function ReviewBookingScreen() {
         <View style={styles.sectionCard}>
           <Text style={styles.sectionTitle}>JOURNEY DETAILS</Text>
           <DetailRow label="Pickup" value={pendingBooking.from} />
+          <DetailRow label="Room no." value={pendingBooking.roomNo ?? ''} />
           <DetailRow label="Via" value={pendingBooking.via} />
           <DetailRow label="To" value={pendingBooking.to} />
           <DetailRow
@@ -94,7 +95,7 @@ export default function ReviewBookingScreen() {
           <DetailRow label="Vehicle" value={getVehicleLabel(pendingBooking.vehicleType)} />
           <DetailRow
             label="Distance"
-            value={`${pendingBooking.distanceKm} km`}
+            value={`${pendingBooking.distanceMiles} mi`}
           />
         </View>
 

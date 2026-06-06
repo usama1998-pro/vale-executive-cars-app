@@ -1,3 +1,4 @@
+import { useKeepAwake } from 'expo-keep-awake';
 import { Platform, StyleSheet, View } from 'react-native';
 import { BookingProvider, useBooking } from './src/context/BookingContext';
 import BookingStatusScreen from './src/screens/BookingStatusScreen';
@@ -19,6 +20,8 @@ function AppContent() {
 }
 
 export default function App() {
+  useKeepAwake();
+
   return (
     <BookingProvider>
       <AppContent />

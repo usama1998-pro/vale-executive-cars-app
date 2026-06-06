@@ -103,6 +103,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       contactNumber: form.contactNumber.trim(),
       email: form.email.trim(),
       from: form.from.trim(),
+      roomNo: form.roomNo.trim(),
       via: form.via.trim() || 'car',
       to: form.to.trim(),
       preferredPickupAt:
@@ -160,8 +161,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         if (!prev) return prev;
         return {
           ...prev,
+          distanceMiles: quote.distanceMiles,
           distanceKm: quote.distanceKm,
-          distanceMiles: quote.distanceKm,
           durationMinutes: quote.durationMinutes,
           vehicleType,
           estimatedFare: quote.fares[vehicleType],
@@ -179,7 +180,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
 
   const goToReview = useCallback(() => {
     if (!pendingBooking || isCalculatingQuote) return;
-    if (pendingBooking.distanceKm <= 0) {
+    if (pendingBooking.distanceMiles <= 0) {
       Alert.alert(
         'Estimate required',
         'Please wait for the route estimate to finish calculating.',
@@ -220,7 +221,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         vehicleType,
         estimatedFare:
           quoteFares?.[vehicleType] ??
-          calculateFare(prev.distanceKm / 1.609344, vehicleType),
+          calculateFare(prev.distanceMiles, vehicleType),
       };
     });
   }, [quoteFares]);
@@ -235,9 +236,10 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         email: pendingBooking.email,
         contactNumber: pendingBooking.contactNumber,
         from: pendingBooking.from,
+        roomNo: pendingBooking.roomNo?.trim() || undefined,
         to: pendingBooking.to,
         via: pendingBooking.via || 'car',
-        distanceMiles: Math.round(pendingBooking.distanceKm),
+        distanceMiles: Math.round(pendingBooking.distanceMiles),
         estimatedFare: Math.round(pendingBooking.estimatedFare),
         vehicleType: pendingBooking.vehicleType,
         preferredPickupAt: pendingBooking.preferredPickupAt,

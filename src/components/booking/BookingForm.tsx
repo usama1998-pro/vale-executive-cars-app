@@ -6,6 +6,7 @@ import { colors, radius, spacing } from '../../theme';
 import { getCurrentLocationAddress } from '../../utils/location';
 import FormInput from './FormInput';
 import GoldButton from './GoldButton';
+import LocationAutocompleteInput from './LocationAutocompleteInput';
 import PreferredPickupPicker from './PreferredPickupPicker';
 
 type BookingFormProps = {
@@ -14,6 +15,7 @@ type BookingFormProps = {
   dense?: boolean;
   fill?: boolean;
   isWeb?: boolean;
+  keyboardInset?: number;
 };
 
 export default function BookingForm({
@@ -22,6 +24,7 @@ export default function BookingForm({
   dense = false,
   fill = false,
   isWeb = false,
+  keyboardInset = 0,
 }: BookingFormProps) {
   const { form, updateForm, goToEstimate, isCalculatingQuote } = useBooking();
   const [isLocatingPickup, setIsLocatingPickup] = useState(false);
@@ -51,26 +54,31 @@ export default function BookingForm({
   const webFit = isWeb && fill;
   const tight = compact || dense || webFit;
   const headingSize = Math.round(
-    (dense ? 14 : compact ? 14 : isWeb ? 22 : 20) * scale,
+    (dense ? 17 : compact ? 19 : isWeb ? 25 : 23) * scale,
   );
   const subSize = Math.round(
-    (dense ? 9 : compact ? 9 : isWeb ? 12 : 11) * scale,
+    (dense ? 11 : compact ? 12 : isWeb ? 14 : 13) * scale,
   );
   const sectionSize = Math.round(
-    (dense ? 10 : compact ? 10 : isWeb ? 13 : 12) * scale,
+    (dense ? 13 : compact ? 15 : isWeb ? 16 : 15) * scale,
   );
-  const panelPadding = dense
+  const panelPaddingVertical = dense
     ? spacing.xs
     : webFit
-      ? Math.round(12 * scale)
+      ? Math.round(8 * scale)
+      : spacing.sm;
+  const panelPaddingHorizontal = dense
+    ? spacing.sm
+    : webFit
+      ? Math.round(20 * scale)
       : compact
-        ? spacing.sm
+        ? spacing.lg
         : spacing.lg;
   const inputGap = webFit
-    ? Math.round(6 * scale)
+    ? Math.round(3 * scale)
     : dense
-      ? Math.round(3 * scale)
-      : 10;
+      ? Math.round(1 * scale)
+      : 4;
 
   const formContent = (
     <>
@@ -91,12 +99,12 @@ export default function BookingForm({
       <View
         style={[
           styles.sectionHeader,
-          tight && { marginBottom: spacing.xs },
+          tight && { marginBottom: 2 },
         ]}
       >
         <Ionicons
           name="person-outline"
-          size={16 * scale}
+          size={20 * scale}
           color={colors.gold}
         />
         <Text style={[styles.sectionTitle, { fontSize: sectionSize }]}>
@@ -121,6 +129,7 @@ export default function BookingForm({
         inputGap={inputGap}
         icon="call-outline"
         trailingIcon="logo-whatsapp"
+        trailingIconColor={colors.whatsapp}
         placeholder="Customer Contact Number"
         value={form.contactNumber}
         onChangeText={(contactNumber) => updateForm({ contactNumber })}
@@ -143,13 +152,13 @@ export default function BookingForm({
         style={[
           styles.sectionHeader,
           tight
-            ? { marginBottom: spacing.xs, marginTop: spacing.xs }
-            : { marginTop: spacing.sm },
+            ? { marginBottom: 2, marginTop: 2 }
+            : { marginTop: 4 },
         ]}
       >
         <Ionicons
           name="location-outline"
-          size={16 * scale}
+          size={20 * scale}
           color={colors.gold}
         />
         <Text style={[styles.sectionTitle, { fontSize: sectionSize }]}>
@@ -157,7 +166,7 @@ export default function BookingForm({
         </Text>
       </View>
 
-      <FormInput
+      <LocationAutocompleteInput
         scale={scale}
         dense={dense}
         webFit={webFit}
@@ -175,12 +184,22 @@ export default function BookingForm({
         dense={dense}
         webFit={webFit}
         inputGap={inputGap}
+        icon="bed-outline"
+        placeholder="Room no. (optional)"
+        value={form.roomNo}
+        onChangeText={(roomNo) => updateForm({ roomNo })}
+      />
+      <FormInput
+        scale={scale}
+        dense={dense}
+        webFit={webFit}
+        inputGap={inputGap}
         icon="location-outline"
         placeholder="Via (optional)"
         value={form.via}
         onChangeText={(via) => updateForm({ via })}
       />
-      <FormInput
+      <LocationAutocompleteInput
         scale={scale}
         dense={dense}
         webFit={webFit}
@@ -210,19 +229,32 @@ export default function BookingForm({
     </>
   );
 
-  if (webFit) {
+  if (fill) {
+    const keyboardOpen = keyboardInset > 0;
     return (
       <View
         style={[
           styles.panel,
           styles.panelFill,
-          { padding: panelPadding, overflow: 'hidden' },
+          {
+            paddingVertical: panelPaddingVertical,
+            paddingHorizontal: panelPaddingHorizontal,
+            overflow: 'hidden',
+          },
         ]}
       >
         <ScrollView
           style={styles.innerScroll}
-          contentContainerStyle={styles.innerScrollContent}
-          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.innerScrollContent,
+            webFit && !keyboardOpen && styles.innerScrollContentWebFit,
+            keyboardOpen && { paddingBottom: keyboardInset },
+          ]}
+          scrollEnabled={keyboardOpen || !webFit}
+          showsVerticalScrollIndicator={keyboardOpen}
+          keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="on-drag"
+          automaticallyAdjustKeyboardInsets
           nestedScrollEnabled
         >
           {formContent}
@@ -238,7 +270,10 @@ export default function BookingForm({
         fill && styles.panelFill,
         compact && styles.panelCompact,
         dense && styles.panelDense,
-        { padding: panelPadding },
+        {
+          paddingVertical: panelPaddingVertical,
+          paddingHorizontal: panelPaddingHorizontal,
+        },
       ]}
     >
       {formContent}
@@ -273,14 +308,16 @@ const styles = StyleSheet.create({
   },
   innerScrollContent: {
     flexGrow: 1,
+  },
+  innerScrollContentWebFit: {
     justifyContent: 'space-between',
   },
   subheadingCompact: {
     marginTop: 2,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   subheadingDense: {
-    marginBottom: spacing.xs,
+    marginBottom: 2,
   },
   heading: {
     color: colors.goldLight,
@@ -292,14 +329,14 @@ const styles = StyleSheet.create({
     color: colors.gold,
     textAlign: 'center',
     letterSpacing: 2,
-    marginTop: 4,
-    marginBottom: spacing.lg,
+    marginTop: 2,
+    marginBottom: spacing.sm,
   },
   sectionHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: spacing.sm,
+    gap: 6,
+    marginBottom: 4,
   },
   sectionTitle: {
     color: colors.gold,
@@ -307,11 +344,11 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
   submitButton: {
-    marginTop: spacing.md,
+    marginTop: spacing.xs,
     alignSelf: 'stretch',
   },
   submitButtonTight: {
-    marginTop: spacing.sm,
+    marginTop: 4,
     alignSelf: 'stretch',
   },
 });

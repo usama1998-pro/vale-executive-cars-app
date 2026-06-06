@@ -94,6 +94,9 @@ export default function BookingStatusScreen() {
               Preferred pickup: {formatPreferredPickup(submittedBooking.preferredPickupAt)}
             </Text>
           ) : null}
+          {submittedBooking.roomNo ? (
+            <Text style={styles.summaryLine}>Room no.: {submittedBooking.roomNo}</Text>
+          ) : null}
           <Text style={styles.fareLine}>
             Estimated fare: {formatGBP(submittedBooking.estimatedFare)}
           </Text>

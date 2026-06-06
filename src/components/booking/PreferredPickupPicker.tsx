@@ -54,18 +54,15 @@ export default function PreferredPickupPicker({
     }
   };
 
-  const clearSelection = () => {
-    onChange('');
-    setPickerMode(null);
-  };
-
-  const iconSize = Math.round(18 * scale);
-  const fontSize = Math.round(14 * scale);
-  const labelSize = Math.round(11 * scale);
-  const selectorHeight = Math.round((dense ? 28 : 44) * scale);
+  const iconSize = Math.round(22 * scale);
+  const fontSize = Math.round(18 * scale);
+  const labelSize = Math.round(15 * scale);
+  const selectorHeight = Math.round((dense ? 36 : 54) * scale);
+  const selectorPaddingHorizontal = Math.round((dense ? 12 : 16) * scale);
+  const selectorPaddingVertical = Math.round((dense ? 8 : 11) * scale);
 
   return (
-    <View style={[styles.wrapper, dense && { marginBottom: 3 }]}>
+    <View style={[styles.wrapper, dense && { marginBottom: 2 }]}>
       <View style={[styles.labelRow, dense && styles.labelRowDense]}>
         <Ionicons name="time-outline" size={iconSize} color={colors.gold} />
         <Text style={[styles.label, { fontSize: labelSize }]}>
@@ -75,7 +72,14 @@ export default function PreferredPickupPicker({
 
       <View style={styles.row}>
         <Pressable
-          style={[styles.selector, { minHeight: selectorHeight }]}
+          style={[
+            styles.selector,
+            {
+              minHeight: selectorHeight,
+              paddingHorizontal: selectorPaddingHorizontal,
+              paddingVertical: selectorPaddingVertical,
+            },
+          ]}
           onPress={() => openPicker('date')}
         >
           <Ionicons name="calendar-outline" size={iconSize} color={colors.gold} />
@@ -85,7 +89,14 @@ export default function PreferredPickupPicker({
         </Pressable>
 
         <Pressable
-          style={[styles.selector, { minHeight: selectorHeight }]}
+          style={[
+            styles.selector,
+            {
+              minHeight: selectorHeight,
+              paddingHorizontal: selectorPaddingHorizontal,
+              paddingVertical: selectorPaddingVertical,
+            },
+          ]}
           onPress={() => openPicker('time')}
         >
           <Ionicons name="time-outline" size={iconSize} color={colors.gold} />
@@ -94,12 +105,6 @@ export default function PreferredPickupPicker({
           </Text>
         </Pressable>
       </View>
-
-      {value ? (
-        <Pressable onPress={clearSelection} style={styles.clearButton}>
-          <Text style={styles.clearText}>Clear selection</Text>
-        </Pressable>
-      ) : null}
 
       {pickerMode ? (
         <View style={styles.pickerContainer}>
@@ -126,16 +131,16 @@ export default function PreferredPickupPicker({
 
 const styles = StyleSheet.create({
   wrapper: {
-    marginBottom: 10,
+    marginBottom: 4,
   },
   labelRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-    marginBottom: 8,
+    gap: 6,
+    marginBottom: 4,
   },
   labelRowDense: {
-    marginBottom: 4,
+    marginBottom: 2,
     gap: 4,
   },
   label: {
@@ -145,7 +150,7 @@ const styles = StyleSheet.create({
   },
   row: {
     flexDirection: 'row',
-    gap: 10,
+    gap: 8,
   },
   selector: {
     flex: 1,
@@ -156,22 +161,11 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: radius.sm,
     backgroundColor: colors.inputBg,
-    paddingHorizontal: 12,
     overflow: 'hidden',
   },
   selectorText: {
     flex: 1,
     color: colors.text,
-  },
-  clearButton: {
-    alignSelf: 'flex-start',
-    marginTop: 6,
-    paddingVertical: 4,
-  },
-  clearText: {
-    color: colors.textMuted,
-    fontSize: 12,
-    textDecorationLine: 'underline',
   },
   pickerContainer: {
     marginTop: 8,

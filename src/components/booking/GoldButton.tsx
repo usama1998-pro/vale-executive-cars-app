@@ -57,7 +57,7 @@ export default function GoldButton({
         style={[
           styles.label,
           {
-            fontSize: Math.round(Math.max((isFilled ? 15 : 13) * scale, isFilled ? 13 : 11)),
+            fontSize: Math.round(Math.max((isFilled ? 18 : 15) * scale, isFilled ? 15 : 13)),
             color: isFilled ? colors.buttonText : colors.gold,
           },
         ]}

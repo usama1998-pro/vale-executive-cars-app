@@ -9,11 +9,11 @@ export type BookingDetails = {
   contactNumber: string;
   email: string;
   from: string;
+  roomNo?: string;
   via: string;
   to: string;
   preferredPickupAt: string;
   distanceKm: number;
-  /** Legacy API field name; booking API stores km in `distanceMiles`. */
   distanceMiles: number;
   durationMinutes?: number;
   vehicleType: VehicleType;
@@ -29,6 +29,7 @@ export type BookingFormData = {
   contactNumber: string;
   email: string;
   from: string;
+  roomNo: string;
   via: string;
   to: string;
   preferredPickupAt: string;
@@ -39,6 +40,7 @@ export const EMPTY_BOOKING_FORM: BookingFormData = {
   contactNumber: '',
   email: '',
   from: '',
+  roomNo: '',
   via: '',
   to: '',
   preferredPickupAt: '',

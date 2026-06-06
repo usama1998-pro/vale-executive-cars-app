@@ -12,6 +12,7 @@ function normalizeBooking(item: Partial<BookingDetails>): BookingDetails {
     contactNumber: item.contactNumber ?? '',
     email: item.email ?? '',
     from: item.from ?? '',
+    roomNo: item.roomNo ?? '',
     via: item.via ?? '',
     to: item.to ?? '',
     preferredPickupAt:

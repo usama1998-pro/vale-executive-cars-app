@@ -1,7 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef } from 'react';
-import { Animated, Easing, StyleSheet, View } from 'react-native';
+import { Animated, Easing, Platform, StyleSheet, View } from 'react-native';
 import { colors } from '../../theme';
+
+const useNativeDriver = Platform.OS !== 'web';
 
 type AnimatedSuccessTickProps = {
   size?: number;
@@ -26,13 +28,13 @@ export default function AnimatedSuccessTick({
         toValue: 1,
         friction: 5,
         tension: 90,
-        useNativeDriver: true,
+        useNativeDriver,
       }),
       Animated.timing(ringOpacity, {
         toValue: 1,
         duration: 280,
         easing: Easing.out(Easing.cubic),
-        useNativeDriver: true,
+        useNativeDriver,
       }),
     ]);
 
@@ -41,13 +43,13 @@ export default function AnimatedSuccessTick({
         toValue: 1,
         friction: 6,
         tension: 120,
-        useNativeDriver: true,
+        useNativeDriver,
       }),
       Animated.timing(checkOpacity, {
         toValue: 1,
         duration: 220,
         easing: Easing.out(Easing.quad),
-        useNativeDriver: true,
+        useNativeDriver,
       }),
     ]);
 
@@ -57,13 +59,13 @@ export default function AnimatedSuccessTick({
           toValue: 1.08,
           duration: 900,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver,
         }),
         Animated.timing(pulseScale, {
           toValue: 1,
           duration: 900,
           easing: Easing.inOut(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver,
         }),
       ]),
     );

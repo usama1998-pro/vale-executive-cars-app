@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, StyleSheet, Text, View } from 'react-native';
+import { Animated, Easing, Platform, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '../../theme';
 
 const STEPS: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
@@ -10,12 +10,14 @@ const STEPS: { icon: keyof typeof Ionicons.glyphMap; label: string }[] = [
 ];
 
 const STEP_INTERVAL_MS = 1100;
+const useNativeDriver = Platform.OS !== 'web';
 
 type EstimateLoaderProps = {
   scale?: number;
+  compact?: boolean;
 };
 
-export default function EstimateLoader({ scale = 1 }: EstimateLoaderProps) {
+export default function EstimateLoader({ scale = 1, compact = false }: EstimateLoaderProps) {
   const [activeStep, setActiveStep] = useState(0);
   const pulse = useRef(new Animated.Value(0)).current;
   const spin = useRef(new Animated.Value(0)).current;
@@ -27,13 +29,13 @@ export default function EstimateLoader({ scale = 1 }: EstimateLoaderProps) {
           toValue: 1,
           duration: 900,
           easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver,
         }),
         Animated.timing(pulse, {
           toValue: 0,
           duration: 900,
           easing: Easing.in(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver,
         }),
       ]),
     );
@@ -42,7 +44,7 @@ export default function EstimateLoader({ scale = 1 }: EstimateLoaderProps) {
         toValue: 1,
         duration: 2600,
         easing: Easing.linear,
-        useNativeDriver: true,
+        useNativeDriver,
       }),
     );
     pulseLoop.start();
@@ -73,7 +75,32 @@ export default function EstimateLoader({ scale = 1 }: EstimateLoaderProps) {
     outputRange: ['0deg', '360deg'],
   });
 
-  const badgeSize = Math.round(96 * scale);
+  const badgeSize = Math.round((compact ? 56 : 96) * scale);
+
+  if (compact) {
+    return (
+      <View style={styles.compactWrap}>
+        <View style={[styles.badgeWrap, { width: badgeSize, height: badgeSize }]}>
+          <Animated.View
+            style={[
+              styles.pulseRing,
+              { borderRadius: badgeSize / 2, opacity: ringOpacity, transform: [{ scale: ringScale }] },
+            ]}
+          />
+          <Animated.View
+            style={[
+              styles.spinnerRing,
+              { borderRadius: badgeSize / 2, transform: [{ rotate }] },
+            ]}
+          />
+          <View style={[styles.badgeCore, { borderRadius: badgeSize / 2 }]}>
+            <Ionicons name="car-sport" size={Math.round(22 * scale)} color={colors.gold} />
+          </View>
+        </View>
+        <Text style={styles.compactText}>Calculating route and fare…</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.card}>
@@ -144,13 +171,13 @@ function Dot({ delay }: { delay: number }) {
           toValue: 1,
           duration: 400,
           easing: Easing.out(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver,
         }),
         Animated.timing(value, {
           toValue: 0,
           duration: 400,
           easing: Easing.in(Easing.ease),
-          useNativeDriver: true,
+          useNativeDriver,
         }),
       ]),
     );
@@ -164,6 +191,16 @@ function Dot({ delay }: { delay: number }) {
 }
 
 const styles = StyleSheet.create({
+  compactWrap: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
+  compactText: {
+    color: colors.textMuted,
+    fontSize: 13,
+    opacity: 0.85,
+  },
   card: {
     borderWidth: 1,
     borderColor: colors.border,

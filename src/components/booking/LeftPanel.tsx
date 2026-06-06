@@ -1,12 +1,13 @@
-import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Image, Linking, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { colors, radius, spacing } from '../../theme';
 import GoldButton from './GoldButton';
 
+const LOGO = require('../../../assets/vale-executive-logo-removebg-preview.png');
 const WHATSAPP_URL = 'https://wa.me/447708044445';
 const WEBSITE_URL = 'https://www.valeexecutive.com';
 const QR_IMAGE =
-  'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' +
+  'https://api.qrserver.com/v1/create-qr-code/?size=512x512&margin=2&ecc=M&data=' +
   encodeURIComponent(WHATSAPP_URL);
 
 type LeftPanelProps = {
@@ -28,40 +29,92 @@ export default function LeftPanel({
   isWeb = false,
   webFit = false,
 }: LeftPanelProps) {
-  const sectionTitle = Math.round((dense ? 11 : isWeb ? 14 : 13) * scale);
-  const bodySize = Math.round((dense ? 10 : isWeb ? 13 : 12) * scale);
-  const smallSize = Math.round((dense ? 9 : isWeb ? 12 : 10) * scale);
-
   const tight = compact || dense || webFit;
+  const noticeSize = Math.round(
+    (dense ? 11 : isWide ? 16 : isWeb ? 14 : 13) * scale,
+  );
+  const airportIconSize = Math.round(
+    (dense ? 22 : isWide ? 40 : tight ? 28 : 32) * scale,
+  );
+  const airportTitleSize = Math.round(
+    (dense ? 13 : isWide ? 20 : tight ? 15 : 17) * scale,
+  );
+  const airportBodySize = Math.round(
+    (dense ? 11 : isWide ? 16 : tight ? 13 : 15) * scale,
+  );
+
   const blockGap = tight ? spacing.sm : spacing.md;
   const sectionGap = tight ? spacing.sm : spacing.lg;
-  const qrSize = dense
-    ? 44 * scale
-    : webFit
-      ? 72 * scale
+  const logoHeight = dense
+    ? 72 * scale
+    : isWide
+      ? 260 * scale
       : compact
-        ? 56 * scale
-        : 100 * scale;
+        ? 120 * scale
+        : 200 * scale;
+  const qrSize = dense
+    ? 80 * scale
+    : tight
+      ? 96 * scale
+      : isWide
+        ? 140 * scale
+        : 120 * scale;
 
-  return (
-    <View
-      style={[
-        styles.panel,
-        fill && styles.panelFill,
-        tight && styles.panelCompact,
-        dense && styles.panelDense,
-      ]}
-    >
-      <View style={[styles.section, { marginBottom: blockGap }]}>
+  const content = (
+    <>
+      <View style={[styles.logoSection, { marginBottom: blockGap }]}>
+        <Image
+          source={LOGO}
+          style={[
+            styles.logo,
+            { height: logoHeight, maxWidth: isWide ? '100%' : 440 },
+          ]}
+          resizeMode="contain"
+          accessibilityLabel="Vale Executives Cars logo"
+        />
+      </View>
+
+      <View
+        style={[
+          styles.noticeBox,
+          tight && styles.noticeBoxCompact,
+          { marginBottom: sectionGap },
+        ]}
+      >
         <Ionicons
-          name="airplane"
-          size={(tight ? 16 : 22) * scale}
+          name="alert-circle-outline"
+          size={Math.round(22 * scale)}
           color={colors.gold}
         />
-        <Text style={[styles.sectionTitle, { fontSize: sectionTitle }]}>
+        <Text
+          style={[
+            styles.noticeText,
+            isWide && styles.noticeTextWide,
+            { fontSize: noticeSize, lineHeight: noticeSize * 1.45 },
+          ]}
+        >
+          IF YOU WOULD LIKE TO PRE-BOOK AN EXECUTIVE TAXI, PLEASE COMPLETE THE
+          BOOKING FORM. FOR LAST-MINUTE BOOKINGS OR URGENT TRAVEL REQUESTS,
+          PLEASE CALL OR WHATSAPP US DIRECTLY.
+        </Text>
+      </View>
+
+      <View
+        style={[
+          styles.sectionBox,
+          tight && styles.sectionBoxCompact,
+          { marginBottom: sectionGap },
+        ]}
+      >
+        <Ionicons
+          name="airplane"
+          size={airportIconSize}
+          color={colors.gold}
+        />
+        <Text style={[styles.sectionTitle, { fontSize: airportTitleSize }]}>
           AIRPORT TRANSFERS
         </Text>
-        <Text style={[styles.body, { fontSize: bodySize }]}>
+        <Text style={[styles.body, { fontSize: airportBodySize, lineHeight: airportBodySize * 1.4 }]}>
           For all airport transfer bookings, please visit:
         </Text>
         <GoldButton
@@ -76,37 +129,8 @@ export default function LeftPanel({
 
       <View
         style={[
-          styles.noticeBox,
-          tight && styles.noticeBoxCompact,
-          { marginBottom: sectionGap },
-        ]}
-      >
-        <Ionicons
-          name="alert-circle-outline"
-          size={20 * scale}
-          color={colors.gold}
-        />
-        <Text style={[styles.noticeText, { fontSize: smallSize }]}>
-          IF YOU WOULD LIKE TO PRE-BOOK AN EXECUTIVE TAXI, PLEASE COMPLETE THE
-          BOOKING FORM. FOR LAST-MINUTE BOOKINGS OR URGENT TRAVEL REQUESTS,
-          PLEASE CALL OR WHATSAPP US DIRECTLY.
-        </Text>
-      </View>
-
-      <Text
-        style={[
-          styles.contactHeading,
-          { fontSize: sectionTitle, marginBottom: blockGap },
-        ]}
-      >
-        CONTACT INFORMATION
-      </Text>
-
-      <View
-        style={[
-          styles.contactRow,
-          !isWide && styles.contactRowStacked,
-          { marginBottom: sectionGap },
+          styles.contactBlock,
+          tight && styles.contactBlockCompact,
         ]}
       >
         <ContactItem
@@ -115,6 +139,7 @@ export default function LeftPanel({
           value="01367 333333"
           scale={scale}
           compact={tight}
+          isWide={isWide}
           onPress={() => Linking.openURL('tel:01367333333')}
         />
         <ContactItem
@@ -123,73 +148,37 @@ export default function LeftPanel({
           value="07708 044445"
           scale={scale}
           compact={tight}
+          isWide={isWide}
+          iconColor={colors.whatsapp}
           onPress={() => Linking.openURL(WHATSAPP_URL)}
         />
-      </View>
-
-      <View
-        style={[
-          styles.qrSection,
-          tight && styles.qrSectionCompact,
-          !isWide && styles.qrSectionStacked,
-          { marginBottom: tight ? 0 : sectionGap },
-        ]}
-      >
-        <View style={styles.qrTextBlock}>
-          <Ionicons
-            name="logo-whatsapp"
-            size={(tight ? 24 : 36) * scale}
-            color={colors.gold}
-          />
-          <Text
-            style={[
-              styles.sectionTitle,
-              { fontSize: sectionTitle, marginTop: 4 },
-            ]}
-          >
-            WHATSAPP US
-          </Text>
-          <Text style={[styles.qrSubtitle, { fontSize: sectionTitle }]}>
-            SCAN QR CODE
-          </Text>
-          {!tight && (
-            <Text
-              style={[styles.body, { fontSize: smallSize, marginTop: 4 }]}
-            >
-              Open WhatsApp camera and scan to chat with us instantly!
-            </Text>
-          )}
-        </View>
-        <Image
-          source={{ uri: QR_IMAGE }}
-          style={[styles.qrImage, { width: qrSize, height: qrSize }]}
-          resizeMode="contain"
-        />
-      </View>
-
-      {!tight && (
-        <View style={styles.partnership}>
-          <Text style={[styles.partnershipLabel, { fontSize: smallSize }]}>
-            IN PARTNERSHIP WITH
-          </Text>
-          <Text
-            style={[
-              styles.partnershipName,
-              { fontSize: Math.round(18 * scale) },
-            ]}
-          >
-            COTSWOLDS FINEST PUBS
-          </Text>
-          <MaterialCommunityIcons
-            name="home-variant"
-            size={64 * scale}
-            color={colors.textMuted}
-            style={styles.pubIcon}
+        <View style={[styles.qrSection, tight && styles.qrSectionCompact]}>
+          <Image
+            source={{ uri: QR_IMAGE }}
+            style={[styles.qrImage, { width: qrSize, height: qrSize }]}
+            resizeMode="cover"
           />
         </View>
-      )}
-    </View>
+      </View>
+    </>
   );
+
+  if (fill) {
+    return (
+      <View style={[styles.panel, styles.panelFill]}>
+        <ScrollView
+          style={styles.panelScroll}
+          contentContainerStyle={styles.panelScrollContent}
+          showsVerticalScrollIndicator={false}
+          nestedScrollEnabled
+        >
+          {content}
+        </ScrollView>
+      </View>
+    );
+  }
+
+  return <View style={styles.panel}>{content}</View>;
 }
 
 function ContactItem({
@@ -198,6 +187,8 @@ function ContactItem({
   value,
   scale,
   compact,
+  isWide = false,
+  iconColor = colors.gold,
   onPress,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
@@ -205,18 +196,28 @@ function ContactItem({
   value: string;
   scale: number;
   compact?: boolean;
+  isWide?: boolean;
+  iconColor?: string;
   onPress: () => void;
 }) {
+  const iconSize = Math.round((compact ? 26 : isWide ? 36 : 30) * scale);
+  const labelSize = Math.round((compact ? 11 : isWide ? 15 : 13) * scale);
+  const valueSize = Math.round((compact ? 14 : isWide ? 19 : 17) * scale);
+
   return (
     <Pressable
-      style={[styles.contactCard, compact && styles.contactCardCompact]}
+      style={[
+        styles.contactCard,
+        compact && styles.contactCardCompact,
+        isWide && styles.contactCardWide,
+      ]}
       onPress={onPress}
     >
-      <Ionicons name={icon} size={20 * scale} color={colors.gold} />
-      <Text style={[styles.contactLabel, { fontSize: 10 * scale }]}>
+      <Ionicons name={icon} size={iconSize} color={iconColor} />
+      <Text style={[styles.contactLabel, { fontSize: labelSize }]}>
         {label}
       </Text>
-      <Text style={[styles.contactValue, { fontSize: 13 * scale }]}>
+      <Text style={[styles.contactValue, { fontSize: valueSize }]}>
         {value}
       </Text>
     </Pressable>
@@ -230,17 +231,30 @@ const styles = StyleSheet.create({
   panelFill: {
     flex: 1,
     minHeight: 0,
+    justifyContent: 'center',
   },
-  panelCompact: {
-    minWidth: 0,
-    justifyContent: 'space-between',
+  panelScroll: {
+    flex: 1,
   },
-  panelDense: {
-    justifyContent: 'space-between',
+  panelScrollContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
   },
-  section: {
+  logoSection: {
     alignItems: 'center',
-    marginBottom: spacing.md,
+  },
+  logo: {
+    width: '100%',
+  },
+  sectionBox: {
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.sm,
+    padding: spacing.md,
+  },
+  sectionBoxCompact: {
+    padding: spacing.sm,
   },
   sectionTitle: {
     color: colors.gold,
@@ -264,9 +278,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.sm,
-    overflow: 'hidden',
     padding: spacing.md,
     gap: 12,
+    alignItems: 'flex-start',
   },
   noticeBoxCompact: {
     padding: spacing.sm,
@@ -275,39 +289,43 @@ const styles = StyleSheet.create({
   noticeText: {
     flex: 1,
     color: colors.text,
-    lineHeight: 16,
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
+    fontWeight: '600',
   },
-  contactHeading: {
-    color: colors.gold,
+  noticeTextWide: {
     fontWeight: '700',
-    textAlign: 'center',
-    letterSpacing: 1,
+    letterSpacing: 0.6,
   },
-  contactRow: {
+  contactBlock: {
     flexDirection: 'row',
-    gap: 12,
-  },
-  contactRowStacked: {
-    flexDirection: 'column',
-  },
-  contactCard: {
-    flex: 1,
-    alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.sm,
-    overflow: 'hidden',
-    paddingVertical: 14,
-    paddingHorizontal: 8,
-    gap: 6,
+    padding: spacing.md,
+    gap: spacing.sm,
+    alignItems: 'stretch',
+  },
+  contactBlockCompact: {
+    padding: spacing.sm,
+    gap: spacing.xs,
+  },
+  contactCard: {
+    flex: 0.95,
+    minWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    paddingHorizontal: 10,
+    gap: 8,
   },
   contactCardCompact: {
-    paddingVertical: 8,
+    paddingVertical: 10,
+    gap: 6,
   },
-  qrSectionCompact: {
-    padding: spacing.sm,
-    gap: spacing.sm,
+  contactCardWide: {
+    paddingVertical: 18,
+    paddingHorizontal: 12,
+    gap: 10,
   },
   contactLabel: {
     color: colors.gold,
@@ -317,50 +335,22 @@ const styles = StyleSheet.create({
   contactValue: {
     color: colors.text,
     fontWeight: '600',
-  },
-  qrSection: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.sm,
-    overflow: 'hidden',
-    padding: spacing.md,
-    gap: spacing.md,
-  },
-  qrSectionStacked: {
-    flexDirection: 'column',
-    alignItems: 'center',
-  },
-  qrTextBlock: {
-    flex: 1,
-  },
-  qrSubtitle: {
-    color: colors.goldLight,
-    fontWeight: '700',
-    letterSpacing: 1,
-  },
-  qrImage: {
-    backgroundColor: colors.yellow,
-    borderRadius: radius.sm,
-  },
-  partnership: {
-    alignItems: 'center',
-    marginTop: spacing.sm,
-  },
-  partnershipLabel: {
-    color: colors.textMuted,
-    letterSpacing: 1,
-  },
-  partnershipName: {
-    color: colors.goldLight,
-    fontFamily: 'serif',
-    fontWeight: '600',
-    marginTop: 4,
     textAlign: 'center',
   },
-  pubIcon: {
-    marginTop: spacing.md,
-    opacity: 0.7,
+  qrSection: {
+    flex: 1.35,
+    minWidth: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  qrSectionCompact: {
+    paddingVertical: 4,
+    paddingHorizontal: 2,
+  },
+  qrImage: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 0,
   },
 });

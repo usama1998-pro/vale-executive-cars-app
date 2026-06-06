@@ -1,8 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import { KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import BookingForm from '../components/booking/BookingForm';
-import Footer from '../components/booking/Footer';
-import Header from '../components/booking/Header';
 import LeftPanel from '../components/booking/LeftPanel';
 import Screen from '../components/Screen';
 import { useKeyboardPadding } from '../hooks/useKeyboardPadding';
@@ -28,18 +26,59 @@ export default function HomeScreen() {
     maxContentWidth,
   } = useResponsive();
   const keyboardPadding = useKeyboardPadding(32);
+  const keyboardOpen = keyboardPadding > 0;
   const isTabletPortrait = isTablet && !isLandscape;
+  const isTabletLandscape = isTablet && isLandscape;
   const compactLayout = fitToScreen && !isWeb;
   const webFit = isWeb && fitToScreen;
   const sideBySide = isWide && !isTabletPortrait;
   const formFirst = (isMobile && !isPhoneLandscape) || isTabletPortrait;
   const layoutKey = `${Math.round(width)}x${Math.round(height)}-${fitToScreen ? 'fit' : 'scroll'}`;
+  const keyboardScrollPad = isWeb ? 0 : keyboardPadding;
+  const canScroll = isMobile || !fitToScreen || keyboardOpen;
 
   const pagePadding = {
     paddingHorizontal: contentPadding,
     paddingTop: screenPaddingTop,
-    paddingBottom: screenPaddingBottom + (isWeb ? 0 : keyboardPadding),
+    paddingBottom: screenPaddingBottom + keyboardScrollPad,
   };
+
+  const leftColumn = (
+    <View
+      style={[
+        fitToScreen ? styles.columnFit : undefined,
+        sideBySide && styles.leftColumn,
+      ]}
+    >
+      <LeftPanel
+        scale={scale}
+        isWide={isWide}
+        compact={compactLayout}
+        dense={isPhoneLandscape}
+        fill={fitToScreen && sideBySide}
+        isWeb={isWeb}
+        webFit={webFit}
+      />
+    </View>
+  );
+
+  const formColumn = (
+    <View
+      style={[
+        fitToScreen ? styles.columnFit : undefined,
+        sideBySide && styles.formColumn,
+      ]}
+    >
+      <BookingForm
+        scale={scale}
+        compact={compactLayout}
+        dense={isPhoneLandscape}
+        fill={fitToScreen}
+        isWeb={isWeb}
+        keyboardInset={keyboardScrollPad}
+      />
+    </View>
+  );
 
   const content = (
     <View
@@ -49,104 +88,51 @@ export default function HomeScreen() {
         { maxWidth: maxContentWidth, alignSelf: 'center', width: '100%' },
       ]}
     >
-      <Header scale={scale} isWide={isWide} compact={compactLayout} isWeb={isWeb} webFit={webFit} />
-
       <View
         style={[
           styles.main,
           fitToScreen && styles.mainFit,
           sideBySide ? styles.mainWide : styles.mainStacked,
+          isTabletLandscape && styles.mainTabletLandscape,
           { gap: columnGap },
         ]}
       >
         {formFirst ? (
           <>
-            <View style={fitToScreen ? styles.columnFit : undefined}>
-              <BookingForm
-                scale={scale}
-                compact={compactLayout}
-                dense={isPhoneLandscape}
-                fill={fitToScreen}
-                isWeb={isWeb}
-              />
-            </View>
-            <View style={fitToScreen ? styles.columnFit : undefined}>
-              <LeftPanel
-                scale={scale}
-                isWide={isWide}
-                compact={compactLayout}
-                dense={isPhoneLandscape}
-                fill={fitToScreen}
-                isWeb={isWeb}
-                webFit={webFit}
-              />
-            </View>
+            {formColumn}
+            {leftColumn}
           </>
         ) : (
           <>
-            <View style={fitToScreen ? styles.columnFit : undefined}>
-              <LeftPanel
-                scale={scale}
-                isWide={isWide}
-                compact={compactLayout}
-                dense={isPhoneLandscape}
-                fill={fitToScreen}
-                isWeb={isWeb}
-                webFit={webFit}
-              />
-            </View>
-            <View style={fitToScreen ? styles.columnFit : undefined}>
-              <BookingForm
-                scale={scale}
-                compact={compactLayout}
-                dense={isPhoneLandscape}
-                fill={fitToScreen}
-                isWeb={isWeb}
-              />
-            </View>
+            {leftColumn}
+            {formColumn}
           </>
         )}
       </View>
-
-      <Footer
-        scale={scale}
-        isWide={isWide || isPhoneLandscape || isWeb}
-        isTablet={isTablet || isPhoneLandscape || isWeb}
-        compact={compactLayout}
-        isWeb={isWeb}
-        webFit={webFit}
-      />
     </View>
   );
 
   return (
     <Screen style={styles.screen}>
       <StatusBar style="light" />
-      <KeyboardAvoidingView
-        style={styles.keyboardView}
-        behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-        enabled={Platform.OS !== 'web'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
+      <ScrollView
+        key={layoutKey}
+        style={styles.scroll}
+        contentContainerStyle={[
+          styles.scrollContent,
+          fitToScreen && styles.scrollContentFit,
+          keyboardOpen && fitToScreen && styles.scrollKeyboardOpen,
+          pagePadding,
+        ]}
+        scrollEnabled={canScroll}
+        showsVerticalScrollIndicator={canScroll}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+        nestedScrollEnabled
       >
-        {fitToScreen ? (
-          <View key={layoutKey} style={[styles.fitRoot, pagePadding]}>
-            {content}
-          </View>
-        ) : (
-          <ScrollView
-            key={layoutKey}
-            style={styles.scroll}
-            contentContainerStyle={[styles.scrollContent, pagePadding]}
-            showsVerticalScrollIndicator
-            keyboardShouldPersistTaps="handled"
-            keyboardDismissMode="on-drag"
-            automaticallyAdjustKeyboardInsets
-            nestedScrollEnabled
-          >
-            {content}
-          </ScrollView>
-        )}
-      </KeyboardAvoidingView>
+        {content}
+      </ScrollView>
     </Screen>
   );
 }
@@ -156,18 +142,18 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: colors.background,
   },
-  keyboardView: {
-    flex: 1,
-  },
-  fitRoot: {
-    flex: 1,
-  },
   scroll: {
     flex: 1,
   },
   scrollContent: {
     flexGrow: 1,
     paddingBottom: 8,
+  },
+  scrollContentFit: {
+    minHeight: '100%',
+  },
+  scrollKeyboardOpen: {
+    justifyContent: 'flex-start',
   },
   content: {
     width: '100%',
@@ -187,6 +173,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'stretch',
   },
+  mainTabletLandscape: {
+    flex: 1,
+  },
   mainStacked: {
     flexDirection: 'column',
   },
@@ -194,5 +183,13 @@ const styles = StyleSheet.create({
     flex: 1,
     minWidth: 0,
     minHeight: 0,
+  },
+  leftColumn: {
+    flex: 1,
+    justifyContent: 'center',
+  },
+  formColumn: {
+    flex: 1,
+    minWidth: 0,
   },
 });

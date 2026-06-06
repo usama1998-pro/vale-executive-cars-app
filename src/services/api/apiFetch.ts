@@ -23,7 +23,7 @@ function buildApiHeaders(body: unknown | undefined): Record<string, string> {
   const headers: Record<string, string> = {
     Accept: 'application/json',
   };
-  // Required for ngrok free tier from mobile / non-browser clients
+  // Required for ngrok free tier (skip browser interstitial)
   if (API_BASE_URL.includes('ngrok')) {
     headers['ngrok-skip-browser-warning'] = 'true';
   }

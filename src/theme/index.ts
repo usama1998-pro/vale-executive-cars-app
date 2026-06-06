@@ -1,9 +1,13 @@
 const green = '#011A16';
 const yellow = '#C89635';
+const whatsapp = '#25D366';
+const whatsappDark = '#128C7E';
 
 export const colors = {
   green,
   yellow,
+  whatsapp,
+  whatsappDark,
   background: green,
   backgroundPanel: green,
   inputBg: green,

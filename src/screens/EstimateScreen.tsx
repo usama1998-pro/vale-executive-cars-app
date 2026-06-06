@@ -11,10 +11,10 @@ import {
 } from 'react-native';
 import EstimateLoader from '../components/booking/EstimateLoader';
 import GoldButton from '../components/booking/GoldButton';
+import JourneyRouteDisplay from '../components/booking/JourneyRouteDisplay';
 import Screen from '../components/Screen';
 import { VEHICLE_IMAGES } from '../constants/vehicleImages';
 import { useBooking } from '../context/BookingContext';
-import { useKeyboardPadding } from '../hooks/useKeyboardPadding';
 import { useResponsive } from '../hooks/useResponsive';
 import { VehicleType } from '../types/booking';
 import { colors, radius, spacing } from '../theme';
@@ -55,15 +55,6 @@ const VEHICLES: {
   },
 ];
 
-function formatDuration(minutes?: number): string | null {
-  if (!minutes || minutes <= 0) return null;
-  const hours = Math.floor(minutes / 60);
-  const mins = minutes % 60;
-  if (hours === 0) return `${mins} min`;
-  if (mins === 0) return `${hours} hr`;
-  return `${hours} hr ${mins} min`;
-}
-
 export default function EstimateScreen() {
   const {
     pendingBooking,
@@ -80,220 +71,245 @@ export default function EstimateScreen() {
     screenPaddingBottom,
     isTablet,
     isWide,
+    fitToScreen,
     columnGap,
     maxContentWidth,
   } = useResponsive();
-  const keyboardPadding = useKeyboardPadding(32);
 
   if (!pendingBooking) {
     return null;
   }
 
-  const quoteReady = !isCalculatingQuote && pendingBooking.distanceKm > 0;
-  const durationLabel = formatDuration(pendingBooking.durationMinutes);
+  const compact = fitToScreen;
+  const quoteReady = !isCalculatingQuote && pendingBooking.distanceMiles > 0;
   const selectedVehicle = VEHICLES.find((v) => v.type === pendingBooking.vehicleType);
+  const imageHeight = Math.round((compact ? 188 : isWide ? 170 : 180) * scale);
+  const titleSize = Math.round((compact ? 28 : 22) * scale);
+  const pagePadding = {
+    paddingHorizontal: contentPadding,
+    paddingTop: screenPaddingTop,
+    paddingBottom: screenPaddingBottom,
+  };
 
-  return (
-    <Screen style={styles.screen}>
-      <StatusBar style="light" />
-      <ScrollView
-        style={styles.scroll}
-        contentContainerStyle={[
-          styles.scrollContent,
-          {
-            paddingHorizontal: contentPadding,
-            paddingTop: screenPaddingTop,
-            paddingBottom: screenPaddingBottom + keyboardPadding,
-          },
-        ]}
-        keyboardShouldPersistTaps="handled"
-        keyboardDismissMode="on-drag"
-        showsVerticalScrollIndicator
-        automaticallyAdjustKeyboardInsets
-        nestedScrollEnabled
-      >
-        <View
-          style={[
-            styles.page,
-            { maxWidth: maxContentWidth, alignSelf: 'center', width: '100%' },
-          ]}
-        >
-          <Pressable style={styles.backRow} onPress={goHome} disabled={isCalculatingQuote}>
-            <Ionicons name="arrow-back" size={20} color={colors.gold} />
-            <Text style={styles.backText}>Back to booking</Text>
-          </Pressable>
+  const renderVehicleCards = () =>
+    isCalculatingQuote
+      ? VEHICLES.map((vehicle) => (
+          <View
+            key={vehicle.type}
+            style={[
+              styles.priceCard,
+              styles.priceCardColumn,
+              styles.skeletonCard,
+              compact && styles.skeletonCardCompact,
+              compact && styles.priceCardCompact,
+              isWide && styles.priceCardCol,
+              isTablet && !isWide && styles.priceCardHalf,
+            ]}
+          >
+            <View style={styles.priceCardContent}>
+              <View
+                style={[
+                  styles.skeletonBlock,
+                  styles.skeletonImage,
+                  compact && { height: imageHeight },
+                ]}
+              />
+              <View style={[styles.skeletonBlock, styles.skeletonTitle]} />
+              <View style={[styles.skeletonBlock, styles.skeletonLine]} />
+            </View>
+            <View style={[styles.skeletonBlock, styles.skeletonFare]} />
+          </View>
+        ))
+      : VEHICLES.map((vehicle) => {
+          const selected = pendingBooking.vehicleType === vehicle.type;
+          const previewFare = quoteFares ? quoteFares[vehicle.type] : 0;
+          return (
+            <Pressable
+              key={vehicle.type}
+              style={({ pressed }) => [
+                styles.priceCard,
+                styles.priceCardColumn,
+                compact && styles.priceCardCompact,
+                isWide && styles.priceCardCol,
+                isTablet && !isWide && styles.priceCardHalf,
+                selected && styles.priceCardSelected,
+                pressed && styles.priceCardPressed,
+              ]}
+              onPress={() => updatePendingVehicle(vehicle.type)}
+            >
+              {vehicle.recommended ? (
+                <View style={styles.popularBadge}>
+                  <Ionicons name="star" size={11} color={colors.buttonText} />
+                  <Text style={styles.popularBadgeText}>POPULAR</Text>
+                </View>
+              ) : null}
 
-          <Text style={[styles.title, { fontSize: Math.round(22 * scale) }]}>
-            ESTIMATED COST
-          </Text>
+              <View style={[styles.radio, selected && styles.radioSelected]}>
+                {selected ? (
+                  <Ionicons name="checkmark" size={14} color={colors.buttonText} />
+                ) : null}
+              </View>
+
+              <View style={styles.priceCardContent}>
+                <Image
+                  source={vehicle.image}
+                  style={[
+                    styles.vehicleImage,
+                    compact && styles.vehicleImageCompact,
+                    { height: imageHeight },
+                  ]}
+                  resizeMode="contain"
+                  accessibilityLabel={`${vehicle.title} vehicle`}
+                />
+
+                <Text style={[styles.priceCardTitle, compact && styles.priceCardTitleCompact]}>
+                  {vehicle.title}
+                </Text>
+                <Text style={[styles.priceCardTagline, compact && styles.priceCardTaglineCompact]}>
+                  {vehicle.tagline}
+                </Text>
+
+                <View style={[styles.priceLinesWrap, compact && styles.priceLinesWrapCompact]}>
+                  {vehicle.lines.map((line) => (
+                    <View key={line} style={styles.priceLineRow}>
+                      <Ionicons name="checkmark-circle" size={compact ? 15 : 14} color={colors.gold} />
+                      <Text
+                        style={[styles.priceLine, compact && styles.priceLineCompact]}
+                        numberOfLines={compact ? 2 : undefined}
+                      >
+                        {line}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              <View style={[styles.farePill, compact && styles.farePillCompact, selected && styles.farePillSelected]}>
+                <Text
+                  style={[
+                    styles.farePillLabel,
+                    compact && styles.farePillLabelCompact,
+                    selected && styles.farePillTextSelected,
+                  ]}
+                >
+                  FARE
+                </Text>
+                <Text
+                  style={[
+                    styles.farePillValue,
+                    compact && styles.farePillValueCompact,
+                    selected && styles.farePillTextSelected,
+                  ]}
+                >
+                  {formatGBP(previewFare)}
+                </Text>
+              </View>
+            </Pressable>
+          );
+        });
+
+  const pageBody = (
+    <View
+      style={[
+        compact ? styles.pageFit : styles.page,
+        { maxWidth: maxContentWidth, alignSelf: 'center', width: '100%' },
+      ]}
+    >
+      <Pressable style={styles.backRow} onPress={goHome} disabled={isCalculatingQuote}>
+        <Ionicons name="arrow-back" size={compact ? 18 : 20} color={colors.gold} />
+        {!compact ? <Text style={styles.backText}>Back to booking</Text> : null}
+      </Pressable>
+
+      <View style={[styles.titleSection, compact && styles.titleSectionCompact]}>
+        <Text style={[styles.title, { fontSize: titleSize }]}>ESTIMATED COST</Text>
+        {!compact ? (
           <Text style={styles.subtitle}>
             {isCalculatingQuote
               ? 'Calculating your route and fare…'
               : 'Choose the service that suits your journey.'}
           </Text>
+        ) : null}
+      </View>
 
-          <View style={styles.journeyCard}>
-            <View style={styles.journeyRow}>
-              <View style={styles.journeyDotFrom} />
-              <Text style={styles.journeyText} numberOfLines={1}>
-                {pendingBooking.from}
-              </Text>
-            </View>
-            <View style={styles.journeyConnector} />
-            <View style={styles.journeyRow}>
-              <Ionicons name="location" size={14} color={colors.gold} />
-              <Text style={styles.journeyText} numberOfLines={1}>
-                {pendingBooking.to}
-              </Text>
-            </View>
-          </View>
+      <JourneyRouteDisplay
+        from={pendingBooking.from}
+        to={pendingBooking.to}
+        compact={compact}
+        scale={scale}
+      />
 
-          {isCalculatingQuote ? <EstimateLoader scale={scale} /> : null}
+      {isCalculatingQuote && !compact ? <EstimateLoader scale={scale} /> : null}
 
-          <View style={styles.sectionHeaderRow}>
-            <Text style={styles.sectionTitle}>SELECT YOUR SERVICE</Text>
-            {quoteReady ? (
-              <View style={styles.distanceChip}>
-                <Ionicons name="speedometer-outline" size={13} color={colors.gold} />
-                <Text style={styles.distanceChipText}>
-                  {pendingBooking.distanceKm} km
-                  {durationLabel ? ` · ${durationLabel}` : ''}
-                </Text>
-              </View>
-            ) : null}
-          </View>
+      {!compact ? (
+        <View style={styles.sectionHeaderRow}>
+          <Text style={styles.sectionTitle}>SELECT YOUR SERVICE</Text>
+        </View>
+      ) : null}
 
-          <View
-            style={[
-              styles.pricingGrid,
-              isWide && styles.pricingGridThreeCol,
-              isTablet && !isWide && styles.pricingGridTwoCol,
-              { gap: columnGap },
-            ]}
-          >
-            {isCalculatingQuote
-              ? VEHICLES.map((vehicle) => (
-                  <View
-                    key={vehicle.type}
-                    style={[
-                      styles.priceCard,
-                      styles.skeletonCard,
-                      isWide && styles.priceCardCol,
-                      isTablet && !isWide && styles.priceCardHalf,
-                    ]}
-                  >
-                    <View style={[styles.skeletonBlock, styles.skeletonImage]} />
-                    <View style={[styles.skeletonBlock, styles.skeletonTitle]} />
-                    <View style={[styles.skeletonBlock, styles.skeletonLine]} />
-                    <View
-                      style={[styles.skeletonBlock, styles.skeletonLine, { width: '60%' }]}
-                    />
-                  </View>
-                ))
-              : VEHICLES.map((vehicle) => {
-                  const selected = pendingBooking.vehicleType === vehicle.type;
-                  const previewFare = quoteFares ? quoteFares[vehicle.type] : 0;
-                  const imageHeight = Math.round((isWide ? 130 : 150) * scale);
-                  return (
-                    <Pressable
-                      key={vehicle.type}
-                      style={({ pressed }) => [
-                        styles.priceCard,
-                        isWide && styles.priceCardCol,
-                        isTablet && !isWide && styles.priceCardHalf,
-                        selected && styles.priceCardSelected,
-                        pressed && styles.priceCardPressed,
-                      ]}
-                      onPress={() => updatePendingVehicle(vehicle.type)}
-                    >
-                      {vehicle.recommended ? (
-                        <View style={styles.popularBadge}>
-                          <Ionicons name="star" size={11} color={colors.buttonText} />
-                          <Text style={styles.popularBadgeText}>POPULAR</Text>
-                        </View>
-                      ) : null}
+      <View style={compact ? styles.compactMain : undefined}>
+      <View
+        style={[
+          styles.pricingGrid,
+          compact && styles.pricingGridFit,
+          isWide && styles.pricingGridThreeCol,
+          compact && isWide && styles.pricingGridThreeColCompact,
+          isTablet && !isWide && styles.pricingGridTwoCol,
+          { gap: columnGap },
+        ]}
+      >
+        {renderVehicleCards()}
+      </View>
+      </View>
 
-                      <View
-                        style={[styles.radio, selected && styles.radioSelected]}
-                      >
-                        {selected ? (
-                          <Ionicons name="checkmark" size={14} color={colors.buttonText} />
-                        ) : null}
-                      </View>
-
-                      <Image
-                        source={vehicle.image}
-                        style={[styles.vehicleImage, { height: imageHeight }]}
-                        resizeMode="contain"
-                        accessibilityLabel={`${vehicle.title} vehicle`}
-                      />
-
-                      <Text style={styles.priceCardTitle}>{vehicle.title}</Text>
-                      <Text style={styles.priceCardTagline}>{vehicle.tagline}</Text>
-
-                      <View style={styles.priceLinesWrap}>
-                        {vehicle.lines.map((line) => (
-                          <View key={line} style={styles.priceLineRow}>
-                            <Ionicons
-                              name="checkmark-circle"
-                              size={14}
-                              color={colors.gold}
-                            />
-                            <Text style={styles.priceLine}>{line}</Text>
-                          </View>
-                        ))}
-                      </View>
-
-                      <View style={[styles.farePill, selected && styles.farePillSelected]}>
-                        <Text
-                          style={[
-                            styles.farePillLabel,
-                            selected && styles.farePillTextSelected,
-                          ]}
-                        >
-                          FARE
-                        </Text>
-                        <Text
-                          style={[
-                            styles.farePillValue,
-                            selected && styles.farePillTextSelected,
-                          ]}
-                        >
-                          {formatGBP(previewFare)}
-                        </Text>
-                      </View>
-                    </Pressable>
-                  );
-                })}
-          </View>
-
-          <View style={styles.totalCard}>
-            <View style={styles.totalLeft}>
-              <Text style={styles.totalLabel}>ESTIMATED TOTAL</Text>
-              <Text style={styles.totalMeta}>
-                {selectedVehicle?.title}
-                {quoteReady ? ` · ${pendingBooking.distanceKm} km` : ''}
-              </Text>
-            </View>
-            <Text style={[styles.totalAmount, { fontSize: Math.round(34 * scale) }]}>
-              {quoteReady ? formatGBP(pendingBooking.estimatedFare) : '—'}
+      <View style={[styles.footerRow, compact && styles.footerRowCompact]}>
+        <View style={[styles.totalCard, compact && styles.totalCardCompact]}>
+          <View style={styles.totalLeft}>
+            <Text style={[styles.totalLabel, compact && styles.totalLabelCompact]}>
+              ESTIMATED TOTAL
+            </Text>
+            <Text style={[styles.totalMeta, compact && styles.totalMetaCompact]} numberOfLines={1}>
+              {selectedVehicle?.title}
             </Text>
           </View>
-
-          <GoldButton
-            label={isCalculatingQuote ? 'CALCULATING…' : 'REVIEW BOOKING DETAILS'}
-            icon="document-text-outline"
-            scale={scale}
-            style={styles.confirmButton}
-            onPress={goToReview}
-            disabled={!quoteReady}
-            loading={isCalculatingQuote}
-          />
-          <Text style={styles.footnote}>
-            Distance is calculated automatically from your pickup and drop-off addresses.
+          <Text style={[styles.totalAmount, { fontSize: Math.round((compact ? 26 : 34) * scale) }]}>
+            {quoteReady ? formatGBP(pendingBooking.estimatedFare) : '—'}
           </Text>
         </View>
-      </ScrollView>
+
+        <GoldButton
+          label={isCalculatingQuote ? 'CALCULATING…' : compact ? 'REVIEW DETAILS' : 'REVIEW BOOKING DETAILS'}
+          icon="document-text-outline"
+          scale={compact ? scale * 0.88 : scale}
+          style={[styles.confirmButton, compact && styles.confirmButtonCompact]}
+          onPress={goToReview}
+          disabled={!quoteReady}
+          loading={isCalculatingQuote}
+        />
+      </View>
+
+      {!compact ? (
+        <Text style={styles.footnote}>
+          Distance is calculated automatically from your pickup and drop-off addresses.
+        </Text>
+      ) : null}
+    </View>
+  );
+
+  return (
+    <Screen style={styles.screen}>
+      <StatusBar style="light" />
+      {compact ? (
+        <View style={[styles.pageShell, pagePadding]}>{pageBody}</View>
+      ) : (
+        <ScrollView
+          style={styles.scroll}
+          contentContainerStyle={[styles.scrollContent, pagePadding]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator
+        >
+          {pageBody}
+        </ScrollView>
+      )}
     </Screen>
   );
 }
@@ -302,6 +318,10 @@ const styles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
+  },
+  pageShell: {
+    flex: 1,
+    minHeight: 0,
   },
   scroll: {
     flex: 1,
@@ -312,11 +332,33 @@ const styles = StyleSheet.create({
   page: {
     width: '100%',
   },
+  pageFit: {
+    flex: 1,
+    minHeight: 0,
+    justifyContent: 'space-between',
+  },
+  compactMain: {
+    flex: 1,
+    minHeight: 0,
+    justifyContent: 'center',
+  },
   backRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    alignSelf: 'flex-start',
+    marginBottom: spacing.xs,
+  },
+  titleSection: {
+    alignItems: 'center',
     marginBottom: spacing.md,
+    paddingBottom: spacing.sm,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  titleSectionCompact: {
+    marginBottom: spacing.sm,
+    paddingBottom: spacing.xs,
   },
   backText: {
     color: colors.gold,
@@ -337,41 +379,6 @@ const styles = StyleSheet.create({
     lineHeight: 20,
     opacity: 0.85,
   },
-  journeyCard: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    paddingVertical: spacing.md,
-    paddingHorizontal: spacing.md,
-    marginBottom: spacing.lg,
-    backgroundColor: colors.backgroundPanel,
-  },
-  journeyRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: spacing.sm,
-  },
-  journeyDotFrom: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: colors.gold,
-    marginLeft: 1,
-  },
-  journeyConnector: {
-    width: 1,
-    height: 16,
-    backgroundColor: colors.border,
-    marginLeft: 7,
-    marginVertical: 3,
-    opacity: 0.6,
-  },
-  journeyText: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 14,
-  },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -383,27 +390,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
   },
-  distanceChip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 5,
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.full,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-  },
-  distanceChipText: {
-    color: colors.gold,
-    fontSize: 12,
-    fontWeight: '600',
-  },
   pricingGrid: {
     marginBottom: spacing.lg,
+  },
+  pricingGridFit: {
+    flexGrow: 0,
+    marginBottom: 0,
   },
   pricingGridThreeCol: {
     flexDirection: 'row',
     alignItems: 'stretch',
+  },
+  pricingGridThreeColCompact: {
+    alignItems: 'stretch',
+    width: '100%',
   },
   pricingGridTwoCol: {
     flexDirection: 'row',
@@ -414,12 +414,31 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    padding: spacing.md,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
     backgroundColor: colors.inputBg,
   },
+  priceCardColumn: {
+    flexDirection: 'column',
+  },
+  priceCardCompact: {
+    flex: 1,
+    alignSelf: 'stretch',
+    minWidth: 0,
+    minHeight: 380,
+    marginBottom: 0,
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+  },
+  priceCardContent: {
+    flex: 1,
+    minHeight: 0,
+    width: '100%',
+  },
   priceCardCol: {
     flex: 1,
+    alignSelf: 'stretch',
     minWidth: 0,
     marginBottom: 0,
   },
@@ -477,22 +496,40 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     marginBottom: spacing.sm,
   },
+  vehicleImageCompact: {
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+    width: '100%',
+  },
   priceCardTitle: {
     color: colors.goldLight,
     fontWeight: '700',
-    fontSize: 16,
+    fontSize: 18,
     letterSpacing: 0.5,
+  },
+  priceCardTitleCompact: {
+    fontSize: 19,
+    textAlign: 'center',
   },
   priceCardTagline: {
     color: colors.textMuted,
-    fontSize: 12,
+    fontSize: 14,
     marginTop: 2,
     marginBottom: spacing.sm,
     opacity: 0.8,
   },
+  priceCardTaglineCompact: {
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: spacing.xs,
+  },
   priceLinesWrap: {
     gap: 4,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  priceLinesWrapCompact: {
+    marginBottom: spacing.xs,
+    width: '100%',
   },
   priceLineRow: {
     flexDirection: 'row',
@@ -502,8 +539,12 @@ const styles = StyleSheet.create({
   priceLine: {
     flex: 1,
     color: colors.textMuted,
-    fontSize: 12,
-    lineHeight: 18,
+    fontSize: 14,
+    lineHeight: 20,
+  },
+  priceLineCompact: {
+    fontSize: 15,
+    lineHeight: 20,
   },
   farePill: {
     marginTop: 'auto',
@@ -516,26 +557,40 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 12,
   },
+  farePillCompact: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+    width: '100%',
+  },
   farePillSelected: {
     backgroundColor: colors.gold,
     borderColor: colors.gold,
   },
   farePillLabel: {
     color: colors.textMuted,
-    fontSize: 11,
+    fontSize: 12,
     fontWeight: '700',
     letterSpacing: 1,
   },
+  farePillLabelCompact: {
+    fontSize: 12,
+  },
   farePillValue: {
     color: colors.goldLight,
-    fontSize: 18,
+    fontSize: 22,
     fontWeight: '800',
+  },
+  farePillValueCompact: {
+    fontSize: 20,
   },
   farePillTextSelected: {
     color: colors.buttonText,
   },
   skeletonCard: {
     minHeight: 320,
+  },
+  skeletonCardCompact: {
+    minHeight: 0,
   },
   skeletonBlock: {
     backgroundColor: colors.gold,
@@ -557,6 +612,20 @@ const styles = StyleSheet.create({
     height: 12,
     marginBottom: spacing.sm,
   },
+  skeletonFare: {
+    width: '100%',
+    height: 44,
+    marginTop: 'auto',
+  },
+  footerRow: {
+    marginBottom: spacing.sm,
+  },
+  footerRowCompact: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: spacing.sm,
+    marginBottom: 0,
+  },
   totalCard: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -568,6 +637,12 @@ const styles = StyleSheet.create({
     marginBottom: spacing.md,
     backgroundColor: colors.backgroundPanel,
   },
+  totalCardCompact: {
+    flex: 1,
+    minWidth: 0,
+    marginBottom: 0,
+    padding: spacing.sm,
+  },
   totalLeft: {
     flex: 1,
     paddingRight: spacing.md,
@@ -578,11 +653,19 @@ const styles = StyleSheet.create({
     letterSpacing: 1.5,
     fontSize: 12,
   },
+  totalLabelCompact: {
+    fontSize: 10,
+    letterSpacing: 0.8,
+  },
   totalMeta: {
     color: colors.textMuted,
     marginTop: 4,
     fontSize: 13,
     opacity: 0.85,
+  },
+  totalMetaCompact: {
+    fontSize: 11,
+    marginTop: 2,
   },
   totalAmount: {
     color: colors.goldLight,
@@ -591,6 +674,13 @@ const styles = StyleSheet.create({
   confirmButton: {
     alignSelf: 'stretch',
     marginBottom: spacing.sm,
+  },
+  confirmButtonCompact: {
+    flex: 1,
+    minWidth: 180,
+    marginBottom: 0,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
   },
   footnote: {
     color: colors.textMuted,
