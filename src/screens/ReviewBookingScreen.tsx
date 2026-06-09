@@ -7,6 +7,7 @@ import { getVehicleOption } from '../constants/vehicleOptions';
 import GoldButton from '../components/booking/GoldButton';
 import Screen from '../components/Screen';
 import { useBooking } from '../context/BookingContext';
+import { isMeaningfulVia } from '../types/booking';
 import { useResponsive } from '../hooks/useResponsive';
 import { colors, radius, spacing } from '../theme';
 import { formatPreferredPickup } from '../utils/dateTime';
@@ -261,8 +262,25 @@ export default function ReviewBookingScreen() {
         left={{ icon: 'business-outline', label: 'Pickup', value: pendingBooking.from }}
         right={{ icon: 'location-outline', label: 'Drop-off', value: pendingBooking.to }}
       />
-      <DetailRow icon="key-outline" label="Room no." value={pendingBooking.roomNo ?? ''} compact={compact} scale={scale} />
-      <DetailRow icon="git-merge-outline" label="Via" value={pendingBooking.via} compact={compact} scale={scale} />
+      <DetailRowPair
+        compact={compact}
+        scale={scale}
+        left={{
+          icon: 'people-outline',
+          label: 'Passengers',
+          value: String(pendingBooking.passengers ?? 1),
+        }}
+        right={{ icon: 'key-outline', label: 'Room no.', value: pendingBooking.roomNo ?? '' }}
+      />
+      {isMeaningfulVia(pendingBooking.via) ? (
+        <DetailRow
+          icon="git-merge-outline"
+          label="Via"
+          value={pendingBooking.via}
+          compact={compact}
+          scale={scale}
+        />
+      ) : null}
       <DetailRow
         icon="time-outline"
         label="Preferred pickup"
@@ -483,7 +501,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: 8,
     alignSelf: 'flex-start',
-    marginBottom: spacing.xs,
+    marginBottom: 0,
   },
   backText: {
     color: colors.gold,
@@ -492,10 +510,12 @@ const styles = StyleSheet.create({
   },
   titleSection: {
     alignItems: 'center',
+    marginTop: spacing.xs,
     marginBottom: spacing.lg,
     gap: spacing.sm,
   },
   titleSectionCompact: {
+    marginTop: spacing.xs,
     marginBottom: spacing.sm,
     paddingBottom: spacing.xs,
     borderBottomWidth: 1,

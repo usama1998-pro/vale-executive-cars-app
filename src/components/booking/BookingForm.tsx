@@ -4,6 +4,7 @@ import { Alert, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { useBooking } from '../../context/BookingContext';
 import { colors, radius, spacing } from '../../theme';
 import { getCurrentLocationAddress } from '../../utils/location';
+import { sanitizePassengerInput } from '../../utils/passengers';
 import FormInput from './FormInput';
 import GoldButton from './GoldButton';
 import LocationAutocompleteInput from './LocationAutocompleteInput';
@@ -179,22 +180,42 @@ export default function BookingForm({
         onChangeText={(from) => updateForm({ from })}
         editable={!isLocatingPickup}
       />
-      <FormInput
+      <View style={[styles.fieldRow, { gap: inputGap, marginBottom: inputGap }]}>
+        <View style={styles.fieldRowItem}>
+          <FormInput
+            scale={scale}
+            dense={dense}
+            webFit={webFit}
+            inputGap={0}
+            icon="people-outline"
+            placeholder="Passengers (max 8)"
+            value={form.passengers}
+            onChangeText={(passengers) =>
+              updateForm({ passengers: sanitizePassengerInput(passengers) })
+            }
+            keyboardType="number-pad"
+            maxLength={1}
+          />
+        </View>
+        <View style={styles.fieldRowItem}>
+          <FormInput
+            scale={scale}
+            dense={dense}
+            webFit={webFit}
+            inputGap={0}
+            icon="bed-outline"
+            placeholder="Room no. (optional)"
+            value={form.roomNo}
+            onChangeText={(roomNo) => updateForm({ roomNo })}
+          />
+        </View>
+      </View>
+      <LocationAutocompleteInput
         scale={scale}
         dense={dense}
         webFit={webFit}
         inputGap={inputGap}
-        icon="bed-outline"
-        placeholder="Room no. (optional)"
-        value={form.roomNo}
-        onChangeText={(roomNo) => updateForm({ roomNo })}
-      />
-      <FormInput
-        scale={scale}
-        dense={dense}
-        webFit={webFit}
-        inputGap={inputGap}
-        icon="location-outline"
+        icon="git-merge-outline"
         placeholder="Via (optional)"
         value={form.via}
         onChangeText={(via) => updateForm({ via })}
@@ -324,13 +345,14 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     letterSpacing: 1,
     textAlign: 'center',
+    marginTop: 0,
   },
   subheading: {
     color: colors.gold,
     textAlign: 'center',
     letterSpacing: 2,
     marginTop: 2,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -342,6 +364,14 @@ const styles = StyleSheet.create({
     color: colors.gold,
     fontWeight: '700',
     letterSpacing: 1,
+  },
+  fieldRow: {
+    flexDirection: 'row',
+    alignItems: 'stretch',
+  },
+  fieldRowItem: {
+    flex: 1,
+    minWidth: 0,
   },
   submitButton: {
     marginTop: spacing.xs,

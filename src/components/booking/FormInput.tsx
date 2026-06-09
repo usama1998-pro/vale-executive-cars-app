@@ -22,6 +22,8 @@ type FormInputProps = TextInputProps & {
   webFit?: boolean;
   inputGap?: number;
   centeredEditor?: boolean;
+  closeOnKeyboardDismiss?: boolean;
+  sheetPlacement?: 'default' | 'top';
   renderModalExtras?: (ctx: {
     draft: string;
     setDraft: (value: string) => void;
@@ -39,6 +41,8 @@ export default function FormInput({
   webFit = false,
   inputGap,
   centeredEditor = Platform.OS !== 'web',
+  closeOnKeyboardDismiss = true,
+  sheetPlacement = 'default',
   renderModalExtras,
   style,
   placeholderTextColor = colors.textMuted,
@@ -204,6 +208,8 @@ export default function FormInput({
           autoCapitalize={autoCapitalize}
           autoCorrect={autoCorrect}
           scale={scale}
+          closeOnKeyboardDismiss={closeOnKeyboardDismiss}
+          sheetPlacement={sheetPlacement}
         >
           {renderModalExtras?.({
             draft,

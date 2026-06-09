@@ -13,6 +13,7 @@ function normalizeBooking(item: Partial<BookingDetails>): BookingDetails {
     email: item.email ?? '',
     from: item.from ?? '',
     roomNo: item.roomNo ?? '',
+    passengers: item.passengers ?? undefined,
     via: item.via ?? '',
     to: item.to ?? '',
     preferredPickupAt:

@@ -20,6 +20,7 @@ export type ApiBookingResponse = {
   contactNumber: string;
   from: string;
   roomNo?: string;
+  passengers?: number;
   to: string;
   distanceMiles: number;
   estimatedFare: number;
@@ -39,6 +40,7 @@ export type CreateBookingPayload = {
   contactNumber: string;
   from: string;
   roomNo?: string;
+  passengers?: number;
   to: string;
   distanceMiles: number;
   estimatedFare: number;
@@ -72,6 +74,7 @@ export function mapApiBookingToDetails(row: ApiBookingResponse): BookingDetails 
     email: row.email,
     from: row.from,
     roomNo: row.roomNo ?? undefined,
+    passengers: row.passengers ?? undefined,
     via: row.via,
     to: row.to,
     preferredPickupAt: row.preferredPickupAt,

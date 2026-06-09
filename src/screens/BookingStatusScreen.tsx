@@ -145,6 +145,9 @@ export default function BookingStatusScreen() {
             Room no.: {submittedBooking.roomNo}
           </Text>
         ) : null}
+        <Text style={[styles.summaryLine, compact && styles.summaryLineFit, { fontSize: summarySize }]}>
+          Passengers: {submittedBooking.passengers ?? 1}
+        </Text>
         <Text style={[styles.fareLine, compact && styles.fareLineFit, { fontSize: fareSize }]}>
           Estimated fare: {formatGBP(submittedBooking.estimatedFare)}
         </Text>
@@ -218,7 +221,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
     overflow: 'hidden',
   },
   scrollView: {
@@ -228,7 +231,7 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     alignItems: 'center',
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
   },
   panel: {
     width: '100%',

@@ -10,6 +10,7 @@ export type BookingDetails = {
   email: string;
   from: string;
   roomNo?: string;
+  passengers?: number;
   via: string;
   to: string;
   preferredPickupAt: string;
@@ -30,10 +31,16 @@ export type BookingFormData = {
   email: string;
   from: string;
   roomNo: string;
+  passengers: string;
   via: string;
   to: string;
   preferredPickupAt: string;
 };
+
+export function isMeaningfulVia(via?: string): boolean {
+  const trimmed = via?.trim();
+  return Boolean(trimmed && trimmed.toLowerCase() !== 'car');
+}
 
 export const EMPTY_BOOKING_FORM: BookingFormData = {
   customerName: '',
@@ -41,6 +48,7 @@ export const EMPTY_BOOKING_FORM: BookingFormData = {
   email: '',
   from: '',
   roomNo: '',
+  passengers: '',
   via: '',
   to: '',
   preferredPickupAt: '',

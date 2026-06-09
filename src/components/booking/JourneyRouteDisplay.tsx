@@ -5,17 +5,63 @@ import { colors, radius, spacing } from '../../theme';
 
 type JourneyRouteDisplayProps = {
   from: string;
+  via?: string;
   to: string;
   compact?: boolean;
   scale?: number;
 };
 
+type RouteStopProps = {
+  label: string;
+  address: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  compact: boolean;
+  scale: number;
+  alignEnd?: boolean;
+};
+
+function RouteStop({
+  label,
+  address,
+  icon,
+  compact,
+  scale,
+  alignEnd = false,
+}: RouteStopProps) {
+  const fontSize = Math.round((compact ? 17 : 18) * scale);
+  const cityIconSize = Math.round((compact ? 22 : 24) * scale);
+
+  return (
+    <View style={[styles.stop, compact && styles.stopCompact, alignEnd && styles.stopPickupCompact]}>
+      <View style={[styles.stopHeader, alignEnd && styles.stopHeaderEnd]}>
+        <Ionicons name={icon} size={cityIconSize} color={colors.gold} />
+        <Text style={[styles.label, { fontSize: Math.round(11 * scale) }]}>{label}</Text>
+      </View>
+      <Text
+        style={[
+          styles.address,
+          styles.addressSingleLine,
+          { fontSize },
+          alignEnd && styles.addressRight,
+        ]}
+        numberOfLines={1}
+        ellipsizeMode="tail"
+      >
+        {address}
+      </Text>
+    </View>
+  );
+}
+
 export default function JourneyRouteDisplay({
   from,
+  via,
   to,
   compact = false,
   scale = 1,
 }: JourneyRouteDisplayProps) {
+  const showVia = Boolean(via?.trim());
+  const layoutCompact = compact && !showVia;
   const progress = useRef(new Animated.Value(0)).current;
   const arrive = useRef(new Animated.Value(0)).current;
 
@@ -54,13 +100,11 @@ export default function JourneyRouteDisplay({
     return () => loop.stop();
   }, [progress, arrive]);
 
-  const fontSize = Math.round((compact ? 17 : 18) * scale);
-  const cityIconSize = Math.round((compact ? 22 : 24) * scale);
   const carSize = Math.round((compact ? 22 : 24) * scale);
   const carBox = Math.round(carSize * 1.6);
 
   // Length the car travels along the track.
-  const trackThickness = compact ? 120 : 64;
+  const trackThickness = layoutCompact ? 120 : 64;
   const travel = trackThickness - carBox;
 
   const carShift = progress.interpolate({
@@ -89,39 +133,44 @@ export default function JourneyRouteDisplay({
     outputRange: [0, 0.5],
   });
 
-  const carTransform = compact
+  const carTransform = layoutCompact
     ? [{ translateX: carShift }, { translateY: carBob }]
     : [{ translateY: carShift }, { translateX: carBob }];
 
   return (
-    <View style={[styles.card, compact && styles.cardCompact]}>
-      <View style={[styles.stop, compact && styles.stopCompact, compact && styles.stopPickupCompact]}>
-        <View style={[styles.stopHeader, compact && styles.stopHeaderEnd]}>
-          <Ionicons name="business" size={cityIconSize} color={colors.gold} />
-          <Text style={[styles.label, { fontSize: Math.round(11 * scale) }]}>PICKUP</Text>
-        </View>
-        <Text
-          style={[styles.address, styles.addressSingleLine, { fontSize }, compact && styles.addressRight]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {from}
-        </Text>
-      </View>
+    <View style={[styles.card, layoutCompact && styles.cardCompact, showVia && styles.cardWithVia]}>
+      <RouteStop
+        label="PICKUP"
+        address={from}
+        icon="business"
+        compact={layoutCompact}
+        scale={scale}
+        alignEnd={layoutCompact}
+      />
+
+      {showVia ? (
+        <RouteStop
+          label="VIA"
+          address={via!}
+          icon="git-merge-outline"
+          compact={false}
+          scale={scale}
+        />
+      ) : null}
 
       <View
         style={[
           styles.track,
-          compact ? styles.trackHorizontal : styles.trackVertical,
-          { [compact ? 'width' : 'height']: trackThickness },
+          layoutCompact ? styles.trackHorizontal : styles.trackVertical,
+          { [layoutCompact ? 'width' : 'height']: trackThickness },
         ]}
       >
-        <View style={[styles.trackLine, compact ? styles.baseLineHorizontal : styles.baseLineVertical]} />
+        <View style={[styles.trackLine, layoutCompact ? styles.baseLineHorizontal : styles.baseLineVertical]} />
         <Animated.View
           style={[
             styles.trailLine,
-            compact ? styles.trailLineHorizontal : styles.trailLineVertical,
-            compact ? { width: trailSize } : { height: trailSize },
+            layoutCompact ? styles.trailLineHorizontal : styles.trailLineVertical,
+            layoutCompact ? { width: trailSize } : { height: trailSize },
           ]}
         />
 
@@ -130,7 +179,7 @@ export default function JourneyRouteDisplay({
           pointerEvents="none"
           style={[
             styles.destPulse,
-            compact ? styles.destPulseHorizontal : styles.destPulseVertical,
+            layoutCompact ? styles.destPulseHorizontal : styles.destPulseVertical,
             {
               opacity: destOpacity,
               transform: [{ scale: destPulse }],
@@ -147,7 +196,7 @@ export default function JourneyRouteDisplay({
               borderRadius: carBox / 2,
               transform: carTransform,
             },
-            compact
+            layoutCompact
               ? [styles.carWrapHorizontal, { marginTop: -carBox / 2 }]
               : [styles.carWrapVertical, { marginLeft: -carBox / 2 }],
           ]}
@@ -156,24 +205,18 @@ export default function JourneyRouteDisplay({
             name="car-sport"
             size={carSize}
             color={colors.buttonText}
-            style={!compact ? styles.carVerticalIcon : undefined}
+            style={!layoutCompact ? styles.carVerticalIcon : undefined}
           />
         </Animated.View>
       </View>
 
-      <View style={[styles.stop, compact && styles.stopCompact]}>
-        <View style={styles.stopHeader}>
-          <Ionicons name="location" size={cityIconSize} color={colors.gold} />
-          <Text style={[styles.label, { fontSize: Math.round(11 * scale) }]}>DROP-OFF</Text>
-        </View>
-        <Text
-          style={[styles.address, styles.addressSingleLine, { fontSize }]}
-          numberOfLines={1}
-          ellipsizeMode="tail"
-        >
-          {to}
-        </Text>
-      </View>
+      <RouteStop
+        label="DROP-OFF"
+        address={to}
+        icon="location"
+        compact={layoutCompact}
+        scale={scale}
+      />
     </View>
   );
 }
@@ -194,6 +237,10 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     marginBottom: spacing.sm,
     gap: spacing.xs,
+  },
+  cardWithVia: {
+    alignSelf: 'stretch',
+    maxWidth: '100%',
   },
   stop: {
     borderRadius: radius.sm,

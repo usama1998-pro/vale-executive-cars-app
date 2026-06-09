@@ -12,20 +12,20 @@ import { createBookingOnApi } from '../services/api/bookingsApi';
 import { fetchRouteQuote } from '../services/api/routingApi';
 import {
   clearBookingCache,
-  getLastBookingForm,
   getStoredCustomers,
   saveCustomerBooking,
-  saveLastBookingForm,
 } from '../services/storage';
 import {
   BookingDetails,
   BookingFormData,
   EMPTY_BOOKING_FORM,
+  isMeaningfulVia,
   VehicleType,
 } from '../types/booking';
 import { getDefaultPickupDate } from '../utils/dateTime';
 import { formatApiErrorMessage } from '../lib/apiErrors';
 import { getCurrentLocationAddress } from '../utils/location';
+import { parsePassengerCount } from '../utils/passengers';
 import { calculateFare } from '../utils/pricing';
 
 export type AppScreen = 'home' | 'estimate' | 'review' | 'status';
@@ -48,6 +48,8 @@ type BookingContextValue = {
   goHomeAndClearCache: () => Promise<void>;
   updatePendingVehicle: (vehicle: VehicleType) => void;
   submitBookingRequest: () => Promise<void>;
+  startSplashDismissed: boolean;
+  dismissStartSplash: () => void;
 };
 
 const BookingContext = createContext<BookingContextValue | null>(null);
@@ -72,26 +74,27 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const [quoteFares, setQuoteFares] = useState<Record<VehicleType, number> | null>(
     null,
   );
+  const [startSplashDismissed, setStartSplashDismissed] = useState(false);
+  const dismissStartSplash = useCallback(() => {
+    setStartSplashDismissed(true);
+  }, []);
+  const initializeHomeForm = useCallback(async () => {
+    await clearBookingCache();
+    let from = '';
+    const address = await getCurrentLocationAddress();
+    if (address) {
+      from = address;
+    }
+    setForm({ ...EMPTY_BOOKING_FORM, from });
+    setCustomers([]);
+    setPendingBooking(null);
+    setQuoteFares(null);
+    setIsCalculatingQuote(false);
+  }, []);
 
   useEffect(() => {
-    (async () => {
-      const [savedForm, savedCustomers] = await Promise.all([
-        getLastBookingForm(),
-        getStoredCustomers(),
-      ]);
-
-      let from = savedForm.from;
-      if (!from.trim()) {
-        const address = await getCurrentLocationAddress();
-        if (address) {
-          from = address;
-        }
-      }
-
-      setForm({ ...savedForm, from });
-      setCustomers(savedCustomers);
-    })();
-  }, []);
+    void initializeHomeForm();
+  }, [initializeHomeForm]);
 
   const updateForm = useCallback((patch: Partial<BookingFormData>) => {
     setForm((prev) => ({ ...prev, ...patch }));
@@ -104,7 +107,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       email: form.email.trim(),
       from: form.from.trim(),
       roomNo: form.roomNo.trim(),
-      via: form.via.trim() || 'car',
+      passengers: parsePassengerCount(form.passengers),
+      via: form.via.trim(),
       to: form.to.trim(),
       preferredPickupAt:
         form.preferredPickupAt.trim() || getDefaultPickupDate().toISOString(),
@@ -128,13 +132,20 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    await saveLastBookingForm({ ...form, ...trimmed });
+    if (trimmed.passengers === null) {
+      Alert.alert(
+        'Invalid passengers',
+        'Please enter a number of passengers between 1 and 8.',
+      );
+      return;
+    }
 
     const vehicleType: VehicleType = 'executive';
     const booking: BookingDetails = {
       id: createLocalId(),
       bookingRef: '',
       ...trimmed,
+      passengers: trimmed.passengers,
       distanceMiles: 0,
       distanceKm: 0,
       vehicleType,
@@ -152,7 +163,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       const quote = await fetchRouteQuote({
         from: trimmed.from,
         to: trimmed.to,
-        via: trimmed.via !== 'car' ? trimmed.via : undefined,
+        via: isMeaningfulVia(trimmed.via) ? trimmed.via : undefined,
         vehicleType,
       });
 
@@ -195,23 +206,16 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const goHome = useCallback(() => {
-    setPendingBooking(null);
     setSubmittedBooking(null);
-    setQuoteFares(null);
     setIsCalculatingQuote(false);
     setScreen('home');
   }, []);
 
   const goHomeAndClearCache = useCallback(async () => {
-    await clearBookingCache();
-    setForm(EMPTY_BOOKING_FORM);
-    setCustomers([]);
-    setPendingBooking(null);
+    await initializeHomeForm();
     setSubmittedBooking(null);
-    setQuoteFares(null);
-    setIsCalculatingQuote(false);
     setScreen('home');
-  }, []);
+  }, [initializeHomeForm]);
 
   const updatePendingVehicle = useCallback((vehicleType: VehicleType) => {
     setPendingBooking((prev) => {
@@ -237,8 +241,9 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         contactNumber: pendingBooking.contactNumber,
         from: pendingBooking.from,
         roomNo: pendingBooking.roomNo?.trim() || undefined,
+        passengers: pendingBooking.passengers,
         to: pendingBooking.to,
-        via: pendingBooking.via || 'car',
+        via: isMeaningfulVia(pendingBooking.via) ? pendingBooking.via : 'car',
         distanceMiles: Math.round(pendingBooking.distanceMiles),
         estimatedFare: Math.round(pendingBooking.estimatedFare),
         vehicleType: pendingBooking.vehicleType,
@@ -279,6 +284,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       goHomeAndClearCache,
       updatePendingVehicle,
       submitBookingRequest,
+      startSplashDismissed,
+      dismissStartSplash,
     }),
     [
       screen,
@@ -298,6 +305,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       goHomeAndClearCache,
       updatePendingVehicle,
       submitBookingRequest,
+      startSplashDismissed,
+      dismissStartSplash,
     ],
   );
 

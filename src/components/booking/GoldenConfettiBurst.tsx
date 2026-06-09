@@ -6,7 +6,7 @@ const useNativeDriver = Platform.OS !== 'web';
 
 const GOLD_CONFETTI = ['#C89635', '#E8C76A', '#A67B2A', '#F0D78C', '#D4A843', colors.gold];
 
-type BurstOrigin = 'center' | 'bottomLeft' | 'bottomRight';
+type BurstOrigin = 'center' | 'circle' | 'bottomLeft' | 'bottomRight';
 
 type Particle = {
   id: number;
@@ -39,6 +39,11 @@ function buildParticles(count: number, spread: number, origin: BurstOrigin): Par
       const reach = 0.7 + Math.random() * 1.25;
       endX = -reach * spread * (0.45 + Math.random() * 0.55);
       endY = -reach * spread * (0.55 + Math.random() * 0.65);
+    } else if (origin === 'circle') {
+      const angle = (Math.PI * 2 * id) / count + (Math.random() - 0.5) * 0.65;
+      const distance = spread * (0.6 + Math.random() * 0.95);
+      endX = Math.cos(angle) * distance;
+      endY = Math.sin(angle) * distance;
     } else {
       const angle = (Math.PI * 2 * id) / count + (Math.random() - 0.5) * 0.9;
       const distance = spread * (0.55 + Math.random() * 0.65);
@@ -126,6 +131,7 @@ type GoldenConfettiBurstProps = {
   spread?: number;
   particleCount?: number;
   repeat?: boolean;
+  repeatIntervalMs?: number;
   origin?: BurstOrigin;
   style?: ViewStyle;
 };
@@ -134,6 +140,7 @@ export default function GoldenConfettiBurst({
   spread = 120,
   particleCount = 28,
   repeat = true,
+  repeatIntervalMs = 3200,
   origin = 'center',
   style,
 }: GoldenConfettiBurstProps) {
@@ -149,9 +156,12 @@ export default function GoldenConfettiBurst({
     if (!repeat) {
       return undefined;
     }
-    const interval = setInterval(() => setBurstId((id) => id + 1), 3200);
+    const interval = setInterval(
+      () => setBurstId((id) => id + 1),
+      repeatIntervalMs,
+    );
     return () => clearInterval(interval);
-  }, [repeat]);
+  }, [repeat, repeatIntervalMs]);
 
   useEffect(() => {
     popScale.setValue(0);

@@ -29,12 +29,25 @@ export type RouteQuotePayload = {
   vehicleType: VehicleType;
 };
 
+export type PlaceSuggestion = {
+  description: string;
+  placeId: string;
+};
+
 export async function fetchRouteQuote(
   payload: RouteQuotePayload,
 ): Promise<RouteQuoteResponse> {
   const body = await apiPostJson<ApiSuccessEnvelope<RouteQuoteResponse>>(
     '/routing/quote',
     payload,
+  );
+  return unwrapApiData(body);
+}
+
+export async function fetchPlaces(input: string): Promise<PlaceSuggestion[]> {
+  const body = await apiPostJson<ApiSuccessEnvelope<PlaceSuggestion[]>>(
+    '/routing/places',
+    { input },
   );
   return unwrapApiData(body);
 }

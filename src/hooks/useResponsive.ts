@@ -5,7 +5,8 @@ const WIDE_MIN = 900;
 const WEB_WIDE_MIN = 768;
 const LANDSCAPE_FIT_HEIGHT = 520;
 const PHONE_LANDSCAPE_FIT_HEIGHT = 920;
-const FIT_EDGE_PADDING = 16;
+const FIT_EDGE_PADDING = 8;
+const SCREEN_TOP_PADDING = 8;
 
 export function useResponsive() {
   const { width, height } = useWindowDimensions();
@@ -32,8 +33,8 @@ export function useResponsive() {
     Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) : 0;
   const fitPaddingTop = fitToScreen
     ? isWeb
-      ? 16
-      : statusBarInset + (isPhoneLandscape ? 6 : FIT_EDGE_PADDING)
+      ? SCREEN_TOP_PADDING
+      : statusBarInset + (isPhoneLandscape ? 4 : FIT_EDGE_PADDING)
     : 0;
   const fitPaddingBottom = fitToScreen
     ? isWeb
@@ -78,10 +79,10 @@ export function useResponsive() {
   const screenPaddingTop = fitToScreen
     ? fitPaddingTop
     : isWeb
-      ? 24
+      ? SCREEN_TOP_PADDING
       : isMobile
-        ? 32
-        : spacingFor(layoutScale, 28, 40);
+        ? statusBarInset + SCREEN_TOP_PADDING
+        : spacingFor(layoutScale, 12, 20);
 
   const screenPaddingBottom = fitToScreen
     ? fitPaddingBottom

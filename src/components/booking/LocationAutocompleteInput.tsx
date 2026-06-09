@@ -1,8 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useMemo, useRef } from 'react';
+import { useState } from 'react';
 import { Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { usePlaceSuggestions } from '../../hooks/usePlaceSuggestions';
 import { colors, radius } from '../../theme';
-import { searchLocations } from '../../services/locationSearch';
 import FormInput from './FormInput';
 
 type LocationAutocompleteInputProps = {
@@ -21,14 +21,24 @@ type LocationAutocompleteInputProps = {
 
 function SuggestionList({
   suggestions,
+  loading,
   scale,
   onSelect,
 }: {
   suggestions: string[];
+  loading: boolean;
   scale: number;
   onSelect: (value: string) => void;
 }) {
   const fontSize = Math.round(14 * scale);
+
+  if (loading && suggestions.length === 0) {
+    return (
+      <View style={styles.statusRow}>
+        <Text style={[styles.statusText, { fontSize }]}>Searching…</Text>
+      </View>
+    );
+  }
 
   if (suggestions.length === 0) {
     return null;
@@ -66,9 +76,9 @@ function ModalSuggestions({
   scale: number;
   onSelect: (value: string) => void;
 }) {
-  const suggestions = useMemo(() => searchLocations(draft), [draft]);
+  const { suggestions, loading } = usePlaceSuggestions(draft, draft.trim().length >= 1);
 
-  if (suggestions.length === 0) {
+  if (!loading && suggestions.length === 0) {
     return null;
   }
 
@@ -79,7 +89,12 @@ function ModalSuggestions({
         nestedScrollEnabled
         style={styles.modalDropdownScroll}
       >
-        <SuggestionList suggestions={suggestions} scale={scale} onSelect={onSelect} />
+        <SuggestionList
+          suggestions={suggestions}
+          loading={loading}
+          scale={scale}
+          onSelect={onSelect}
+        />
       </ScrollView>
     </View>
   );
@@ -98,28 +113,20 @@ export default function LocationAutocompleteInput({
   webFit = false,
   inputGap,
 }: LocationAutocompleteInputProps) {
-  const suppressNextSearch = useRef(false);
-  const suggestions = useMemo(() => {
-    if (Platform.OS !== 'web') {
-      return [];
-    }
-    if (suppressNextSearch.current) {
-      return [];
-    }
-    const trimmed = value.trim();
-    if (trimmed.length < 1) {
-      return [];
-    }
-    return searchLocations(value);
-  }, [value]);
+  const [suppressSuggestions, setSuppressSuggestions] = useState(false);
 
-  const isOpen = Platform.OS === 'web' && suggestions.length > 0;
+  const searchEnabled =
+    Platform.OS === 'web' && !suppressSuggestions && value.trim().length >= 1;
+
+  const { suggestions, loading } = usePlaceSuggestions(value, searchEnabled);
+  const isOpen =
+    Platform.OS === 'web' && searchEnabled && (loading || suggestions.length > 0);
 
   const selectSuggestion = (next: string) => {
-    suppressNextSearch.current = true;
+    setSuppressSuggestions(true);
     onChangeText(next);
     requestAnimationFrame(() => {
-      suppressNextSearch.current = false;
+      setSuppressSuggestions(false);
     });
   };
 
@@ -140,6 +147,8 @@ export default function LocationAutocompleteInput({
         editable={editable}
         onChangeText={onChangeText}
         autoCorrect={false}
+        closeOnKeyboardDismiss={false}
+        sheetPlacement="top"
         renderModalExtras={({ draft, close }) => (
           <ModalSuggestions
             draft={draft}
@@ -158,26 +167,12 @@ export default function LocationAutocompleteInput({
             nestedScrollEnabled
             style={styles.dropdownScroll}
           >
-            {suggestions.map((suggestion) => (
-              <Pressable
-                key={suggestion}
-                style={({ pressed }) => [
-                  styles.option,
-                  pressed && styles.optionPressed,
-                ]}
-                onPress={() => selectSuggestion(suggestion)}
-              >
-                <Ionicons
-                  name="location-outline"
-                  size={Math.round(14 * scale)}
-                  color={colors.gold}
-                  style={styles.optionIcon}
-                />
-                <Text style={[styles.optionText, { fontSize }]} numberOfLines={2}>
-                  {suggestion}
-                </Text>
-              </Pressable>
-            ))}
+            <SuggestionList
+              suggestions={suggestions}
+              loading={loading}
+              scale={scale}
+              onSelect={selectSuggestion}
+            />
           </ScrollView>
         </View>
       ) : null}
@@ -209,6 +204,13 @@ const styles = StyleSheet.create({
   },
   modalDropdownScroll: {
     maxHeight: 200,
+  },
+  statusRow: {
+    paddingVertical: 10,
+    paddingHorizontal: 12,
+  },
+  statusText: {
+    color: colors.textMuted,
   },
   option: {
     flexDirection: 'row',

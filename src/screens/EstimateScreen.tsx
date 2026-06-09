@@ -145,7 +145,6 @@ export default function EstimateScreen() {
                       <Ionicons name="checkmark-circle" size={compact ? 15 : 14} color={colors.gold} />
                       <Text
                         style={[styles.priceLine, compact && styles.priceLineCompact]}
-                        numberOfLines={compact ? 2 : undefined}
                       >
                         {line}
                       </Text>
@@ -201,12 +200,14 @@ export default function EstimateScreen() {
         ) : null}
       </View>
 
-      <JourneyRouteDisplay
-        from={pendingBooking.from}
-        to={pendingBooking.to}
-        compact={compact}
-        scale={scale}
-      />
+      <View style={styles.routeWrap}>
+        <JourneyRouteDisplay
+          from={pendingBooking.from}
+          to={pendingBooking.to}
+          compact={compact}
+          scale={scale}
+        />
+      </View>
 
       {isCalculatingQuote && !compact ? <EstimateLoader scale={scale} /> : null}
 
@@ -216,7 +217,12 @@ export default function EstimateScreen() {
         </View>
       ) : null}
 
-      <View style={compact ? styles.cardsAndFooter : undefined}>
+      <View
+        style={[
+          compact ? styles.cardsAndFooter : undefined,
+          compact && styles.cardsAndFooterRaised,
+        ]}
+      >
         <View
           style={[
             styles.pricingGrid,
@@ -309,24 +315,32 @@ const styles = StyleSheet.create({
   cardsAndFooter: {
     flex: 1,
     minHeight: 0,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+  },
+  cardsAndFooterRaised: {
+    marginTop: -spacing.sm,
+  },
+  routeWrap: {
+    marginBottom: spacing.sm,
   },
   backRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
     alignSelf: 'flex-start',
-    marginBottom: spacing.xs,
+    marginBottom: 0,
   },
   titleSection: {
     alignItems: 'center',
+    marginTop: spacing.xs,
     marginBottom: spacing.md,
     paddingBottom: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
   titleSectionCompact: {
-    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
     paddingBottom: spacing.xs,
   },
   backText: {
@@ -344,7 +358,7 @@ const styles = StyleSheet.create({
     color: colors.textMuted,
     textAlign: 'center',
     marginTop: 6,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.md,
     lineHeight: 20,
     opacity: 0.85,
   },
@@ -352,7 +366,8 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    marginBottom: spacing.sm,
+    marginTop: -spacing.xs,
+    marginBottom: spacing.xs,
   },
   sectionTitle: {
     color: colors.gold,
@@ -386,6 +401,7 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
+    minHeight: 390,
     backgroundColor: colors.inputBg,
   },
   priceCardColumn: {
@@ -395,7 +411,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignSelf: 'stretch',
     minWidth: 0,
-    minHeight: 380,
+    minHeight: 460,
     marginBottom: 0,
     paddingVertical: spacing.lg,
     paddingHorizontal: spacing.md,
@@ -497,8 +513,10 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   priceLinesWrapCompact: {
+    flex: 1,
     marginBottom: spacing.xs,
     width: '100%',
+    gap: 6,
   },
   priceLineRow: {
     flexDirection: 'row',
@@ -512,8 +530,8 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   priceLineCompact: {
-    fontSize: 15,
-    lineHeight: 20,
+    fontSize: 14,
+    lineHeight: 21,
   },
   farePill: {
     marginTop: 'auto',
@@ -556,7 +574,7 @@ const styles = StyleSheet.create({
     color: colors.buttonText,
   },
   skeletonCard: {
-    minHeight: 320,
+    minHeight: 390,
   },
   skeletonCardCompact: {
     minHeight: 0,
