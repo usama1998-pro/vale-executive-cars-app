@@ -13,7 +13,11 @@
       "backgroundColor": "#001e14"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "UIStatusBarHidden": true,
+        "UIViewControllerBasedStatusBarAppearance": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -23,6 +27,11 @@
       "softwareKeyboardLayoutMode": "resize",
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
+      "navigationBar": {
+        "visible": "sticky-immersive",
+        "barStyle": "light-content",
+        "backgroundColor": "#011A16"
+      },
       "package": "com.anonymous.vecapp"
     },
     "web": {

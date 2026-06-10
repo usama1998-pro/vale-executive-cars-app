@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StatusBar } from 'expo-status-bar';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import AnimatedSuccessTick from '../components/booking/AnimatedSuccessTick';
 import GoldenConfettiBurst from '../components/booking/GoldenConfettiBurst';
@@ -165,7 +164,6 @@ export default function BookingStatusScreen() {
 
   return (
     <Screen style={styles.screen}>
-      <StatusBar style="light" />
       {showSuccessTick ? (
         <View style={styles.confettiOverlay} pointerEvents="none">
           <GoldenConfettiBurst

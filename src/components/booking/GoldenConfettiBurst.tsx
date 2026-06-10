@@ -4,7 +4,7 @@ import { colors } from '../../theme';
 
 const useNativeDriver = Platform.OS !== 'web';
 
-const GOLD_CONFETTI = ['#C89635', '#E8C76A', '#A67B2A', '#F0D78C', '#D4A843', colors.gold];
+const GOLD_CONFETTI = ['#C08C2F', '#EBB548', '#A87225', '#F2C96A', '#8B6914', colors.gold];
 
 type BurstOrigin = 'center' | 'circle' | 'bottomLeft' | 'bottomRight';
 

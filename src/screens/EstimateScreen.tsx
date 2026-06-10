@@ -1,5 +1,4 @@
 import { Ionicons } from '@expo/vector-icons';
-import { StatusBar } from 'expo-status-bar';
 import {
   Image,
   Pressable,
@@ -273,7 +272,6 @@ export default function EstimateScreen() {
 
   return (
     <Screen style={styles.screen}>
-      <StatusBar style="light" />
       {compact ? (
         <View style={[styles.pageShell, pagePadding]}>{pageBody}</View>
       ) : (

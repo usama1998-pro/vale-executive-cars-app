@@ -1,6 +1,8 @@
 import { useKeepAwake } from 'expo-keep-awake';
+import { StatusBar } from 'expo-status-bar';
 import { Platform, StyleSheet, View } from 'react-native';
 import { BookingProvider, useBooking } from './src/context/BookingContext';
+import { useImmersiveMobileUi } from './src/hooks/useImmersiveMobileUi';
 import BookingStatusScreen from './src/screens/BookingStatusScreen';
 import EstimateScreen from './src/screens/EstimateScreen';
 import HomeScreen from './src/screens/HomeScreen';
@@ -21,9 +23,11 @@ function AppContent() {
 
 export default function App() {
   useKeepAwake();
+  useImmersiveMobileUi(Platform.OS !== 'web');
 
   return (
     <BookingProvider>
+      <StatusBar hidden={Platform.OS !== 'web'} style="light" />
       <AppContent />
     </BookingProvider>
   );

@@ -272,7 +272,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    backgroundColor: colors.gold,
+    backgroundColor: colors.buttonGold,
     borderRadius: radius.sm,
     marginTop: spacing.xs,
     flexShrink: 0,

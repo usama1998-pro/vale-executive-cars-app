@@ -1,4 +1,3 @@
-import { StatusBar } from 'expo-status-bar';
 import { useCallback, useRef, useState } from 'react';
 import {
   Animated,
@@ -152,7 +151,6 @@ export default function HomeScreen() {
 
   return (
     <Screen style={styles.screen}>
-      <StatusBar style="light" />
       <View style={styles.homeRoot}>
         <ScrollView
           key={layoutKey}

@@ -1,9 +1,9 @@
-import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, StyleSheet, Text, View } from 'react-native';
 import { useResponsive } from '../../hooks/useResponsive';
 import { colors, spacing } from '../../theme';
 import BookTaxiPulseButton from './BookTaxiPulseButton';
 
-const LOGO = require('../../../assets/vale-executive-logo-removebg-preview.png');
+const LOGO = require('../../../assets/vale-executive-brand-logo.png');
 
 type StartSplashOverlayProps = {
   onPress: () => void;
@@ -63,12 +63,12 @@ export default function StartSplashOverlay({ onPress }: StartSplashOverlayProps)
     headlineBase = Math.round(96 * scale);
     sublineBase = Math.round(44 * scale);
     buttonSize = Math.min(
-      Math.round(availableWidth * 0.64),
-      Math.round(availableHeight * 0.32),
-      Math.round(380 * scale),
+      Math.round(availableWidth * 0.52),
+      Math.round(availableHeight * 0.24),
+      Math.round(300 * scale),
     );
   } else {
-    buttonSize = Math.round(availableHeight * 0.92);
+    buttonSize = Math.round(availableHeight * 0.76);
     copyWidth = Math.max(
       240,
       availableWidth - buttonSize - layoutGap,
@@ -139,7 +139,7 @@ export default function StartSplashOverlay({ onPress }: StartSplashOverlayProps)
   }
 
   const textBlock = (
-    <View style={[styles.copy, { width: copyWidth }]}>
+    <View style={[styles.copy, { width: copyWidth }]} pointerEvents="none">
       <Image
         source={LOGO}
         style={[
@@ -213,14 +213,10 @@ export default function StartSplashOverlay({ onPress }: StartSplashOverlayProps)
   );
 
   return (
-    <Pressable
-      style={[styles.screen, { paddingHorizontal: contentPadding }]}
-      onPress={onPress}
-      accessibilityRole="button"
-      accessibilityLabel="Touch to book a taxi ride"
-    >
-      <View style={styles.centerShell}>
+    <View style={[styles.screen, { paddingHorizontal: contentPadding }]}>
+      <View style={styles.centerShell} pointerEvents="box-none">
         <View
+          pointerEvents="box-none"
           style={[
             isPortrait ? styles.mainColumn : styles.mainRow,
             { gap: layoutGap, maxWidth: availableWidth },
@@ -230,7 +226,7 @@ export default function StartSplashOverlay({ onPress }: StartSplashOverlayProps)
           {buttonBlock}
         </View>
       </View>
-    </Pressable>
+    </View>
   );
 }
 

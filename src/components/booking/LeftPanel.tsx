@@ -3,7 +3,7 @@ import { Image, Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'r
 import { colors, radius, spacing } from '../../theme';
 import GoldButton from './GoldButton';
 
-const LOGO = require('../../../assets/vale-executive-logo-removebg-preview.png');
+const LOGO = require('../../../assets/vale-executive-brand-logo.png');
 const WHATSAPP_URL = 'https://wa.me/447708044445';
 const WEBSITE_URL = 'https://www.valeexecutive.com';
 const QR_IMAGE =

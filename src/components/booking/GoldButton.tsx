@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   filled: {
-    backgroundColor: colors.gold,
+    backgroundColor: colors.buttonGold,
   },
   outline: {
     borderWidth: 1,

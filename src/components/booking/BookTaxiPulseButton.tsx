@@ -1,5 +1,9 @@
 import { Ionicons } from '@expo/vector-icons';
+import { useCallback, useRef } from 'react';
 import {
+  Animated,
+  Easing,
+  Platform,
   Pressable,
   StyleSheet,
   Text,
@@ -8,10 +12,12 @@ import {
 import { colors } from '../../theme';
 import GoldenConfettiBurst from './GoldenConfettiBurst';
 
-const BUTTON_GOLD = '#C89635';
-const BUTTON_RING = '#8B6914';
-const BUTTON_HIGHLIGHT = '#E8B84A';
-const BUTTON_SHADOW = '#6B4F0F';
+const useNativeDriver = Platform.OS !== 'web';
+
+const BUTTON_GOLD = colors.buttonGold;
+const BUTTON_RING = '#A87225';
+const BUTTON_HIGHLIGHT = '#F2C96A';
+const BUTTON_SHADOW = '#7A5A1A';
 
 type BookTaxiPulseButtonProps = {
   size: number;
@@ -22,6 +28,48 @@ export default function BookTaxiPulseButton({
   size,
   onPress,
 }: BookTaxiPulseButtonProps) {
+  const pressScale = useRef(new Animated.Value(1)).current;
+  const tapRingScale = useRef(new Animated.Value(0)).current;
+  const tapRingOpacity = useRef(new Animated.Value(0)).current;
+
+  const handlePress = useCallback(() => {
+    pressScale.setValue(1);
+    tapRingScale.setValue(0.85);
+    tapRingOpacity.setValue(0.7);
+
+    Animated.parallel([
+      Animated.sequence([
+        Animated.timing(pressScale, {
+          toValue: 0.9,
+          duration: 90,
+          easing: Easing.out(Easing.quad),
+          useNativeDriver,
+        }),
+        Animated.spring(pressScale, {
+          toValue: 1,
+          friction: 4,
+          tension: 220,
+          useNativeDriver,
+        }),
+      ]),
+      Animated.sequence([
+        Animated.timing(tapRingScale, {
+          toValue: 1.45,
+          duration: 420,
+          easing: Easing.out(Easing.cubic),
+          useNativeDriver,
+        }),
+        Animated.timing(tapRingOpacity, {
+          toValue: 0,
+          duration: 120,
+          useNativeDriver,
+        }),
+      ]),
+    ]).start();
+
+    onPress();
+  }, [onPress, pressScale, tapRingOpacity, tapRingScale]);
+
   const outerSize = size;
   const innerSize = size * 0.88;
   const iconSize = size * 0.22;
@@ -45,20 +93,38 @@ export default function BookTaxiPulseButton({
         }}
       />
 
-      <Pressable
-        onPress={onPress}
-        accessibilityRole="button"
-        accessibilityLabel="Book a taxi ride"
-        style={({ pressed }) => [
-          styles.outerRing,
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          styles.tapRing,
           {
             width: outerSize,
             height: outerSize,
             borderRadius: outerSize / 2,
-            opacity: pressed ? 0.92 : 1,
+            opacity: tapRingOpacity,
+            transform: [{ scale: tapRingScale }],
           },
         ]}
+      />
+
+      <Pressable
+        onPress={handlePress}
+        accessibilityRole="button"
+        accessibilityLabel="Book a taxi ride"
+        hitSlop={8}
+        style={styles.pressTarget}
       >
+        <Animated.View
+          style={[
+            styles.outerRing,
+            {
+              width: outerSize,
+              height: outerSize,
+              borderRadius: outerSize / 2,
+              transform: [{ scale: pressScale }],
+            },
+          ]}
+        >
         <View
           style={[
             styles.innerCircle,
@@ -121,6 +187,7 @@ export default function BookTaxiPulseButton({
             />
           </View>
         </View>
+        </Animated.View>
       </Pressable>
     </View>
   );
@@ -131,6 +198,18 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     overflow: 'visible',
+  },
+  pressTarget: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
+  },
+  tapRing: {
+    position: 'absolute',
+    borderWidth: 3,
+    borderColor: BUTTON_HIGHLIGHT,
+    backgroundColor: 'transparent',
+    zIndex: 1,
   },
   outerRing: {
     alignItems: 'center',
@@ -143,7 +222,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.35,
     shadowRadius: 10,
     elevation: 12,
-    zIndex: 2,
   },
   innerCircle: {
     alignItems: 'center',

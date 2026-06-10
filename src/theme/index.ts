@@ -1,22 +1,24 @@
 const green = '#011A16';
-const yellow = '#C89635';
+const gold = '#C08C2F';
+const buttonGold = '#EBB548';
 const whatsapp = '#25D366';
 const whatsappDark = '#128C7E';
 
 export const colors = {
   green,
-  yellow,
+  yellow: gold,
+  buttonGold,
   whatsapp,
   whatsappDark,
   background: green,
   backgroundPanel: green,
   inputBg: green,
-  gold: yellow,
-  goldLight: yellow,
-  goldMuted: yellow,
-  border: yellow,
-  text: yellow,
-  textMuted: yellow,
+  gold,
+  goldLight: gold,
+  goldMuted: gold,
+  border: gold,
+  text: gold,
+  textMuted: gold,
   buttonText: green,
 };
 

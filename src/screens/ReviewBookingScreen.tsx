@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
 import { Ionicons } from '@expo/vector-icons';
-import { StatusBar } from 'expo-status-bar';
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { VEHICLE_IMAGES } from '../constants/vehicleImages';
 import { getVehicleOption } from '../constants/vehicleOptions';
@@ -460,7 +459,6 @@ export default function ReviewBookingScreen() {
 
   return (
     <Screen style={styles.screen}>
-      <StatusBar style="light" />
       {compact ? (
         <View style={[styles.pageShell, pagePadding]}>{pageBody}</View>
       ) : (

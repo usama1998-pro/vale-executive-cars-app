@@ -29,19 +29,31 @@ export function useResponsive() {
     !isWeb && isLandscape && isWide && (isTabletDevice || isPhoneLandscape);
   const fitToScreen = webFit || nativeFit;
 
-  const statusBarInset =
-    Platform.OS === 'android' ? (StatusBar.currentHeight ?? 24) : 0;
+  const hideSystemBars = !isWeb;
+  const statusBarInset = hideSystemBars
+    ? 0
+    : Platform.OS === 'android'
+      ? (StatusBar.currentHeight ?? 24)
+      : 0;
   const fitPaddingTop = fitToScreen
     ? isWeb
       ? SCREEN_TOP_PADDING
-      : statusBarInset + (isPhoneLandscape ? 4 : FIT_EDGE_PADDING)
+      : hideSystemBars
+        ? isPhoneLandscape
+          ? 4
+          : FIT_EDGE_PADDING
+        : statusBarInset + (isPhoneLandscape ? 4 : FIT_EDGE_PADDING)
     : 0;
   const fitPaddingBottom = fitToScreen
     ? isWeb
       ? 12
-      : isPhoneLandscape
-        ? 8
-        : FIT_EDGE_PADDING + 12
+      : hideSystemBars
+        ? isPhoneLandscape
+          ? 8
+          : FIT_EDGE_PADDING + 8
+        : isPhoneLandscape
+          ? 8
+          : FIT_EDGE_PADDING + 12
     : 0;
   const fitContentHeight = height - fitPaddingTop - fitPaddingBottom;
 
@@ -80,17 +92,21 @@ export function useResponsive() {
     ? fitPaddingTop
     : isWeb
       ? SCREEN_TOP_PADDING
-      : isMobile
-        ? statusBarInset + SCREEN_TOP_PADDING
-        : spacingFor(layoutScale, 12, 20);
+      : hideSystemBars
+        ? SCREEN_TOP_PADDING
+        : isMobile
+          ? statusBarInset + SCREEN_TOP_PADDING
+          : spacingFor(layoutScale, 12, 20);
 
   const screenPaddingBottom = fitToScreen
     ? fitPaddingBottom
     : isWeb
       ? 24
-      : isMobile
-        ? 56
-        : screenPaddingTop;
+      : hideSystemBars
+        ? FIT_EDGE_PADDING + 8
+        : isMobile
+          ? 56
+          : screenPaddingTop;
 
   const columnGap = fitToScreen
     ? isWeb
