@@ -190,6 +190,8 @@ export default function ReviewBookingScreen() {
 
   const compact = fitToScreen;
   const titleSize = Math.round((compact ? 30 : 26) * scale);
+  const backIconSize = Math.round((compact ? 32 : 22) * scale);
+  const backHitSize = backIconSize + Math.round(spacing.md * 2);
   const vehicleImageHeight = compact ? undefined : Math.round(180 * scale);
   const actionRowMinHeight = Math.round((compact ? 58 : 52) * scale);
   const totalSize = Math.round((compact ? 46 : 40) * scale);
@@ -296,7 +298,7 @@ export default function ReviewBookingScreen() {
 
   const vehicleSection = (
     <View style={[styles.sectionCard, compact && styles.sectionCardCompact, compact && styles.vehicleCardCompact]}>
-      <Text style={[styles.sectionTitle, compact && styles.sectionTitleCompact]}>SELECTED SERVICE</Text>
+      <Text style={[styles.sectionTitle, compact && styles.sectionTitleCompact]}>SELECTED VEHICLE</Text>
       <View style={[styles.vehicleImageWrap, compact && styles.vehicleImageWrapCompact]}>
         <Image
           source={VEHICLE_IMAGES[pendingBooking.vehicleType]}
@@ -342,40 +344,26 @@ export default function ReviewBookingScreen() {
           </TaggedInfoBlock>
         </View>
         <View style={styles.detailPairCell}>
-          {selectedService?.lines.length ? (
-            <TaggedInfoBlock icon="list-outline" label="Service includes" compact={compact} scale={scale}>
-              {selectedService.lines.map((line) => (
-                <Text
-                  key={line}
-                  style={[
-                    styles.serviceLine,
-                    compact && styles.serviceLineCompact,
-                    scale ? { fontSize: Math.round((compact ? 15 : 14) * scale) } : null,
-                  ]}
-                >
-                  {line}
-                </Text>
-              ))}
-            </TaggedInfoBlock>
-          ) : null}
+          <DetailRow
+            icon="speedometer-outline"
+            label="Distance"
+            value={`${pendingBooking.distanceMiles} mi`}
+            compact={compact}
+            scale={scale}
+            inline
+          />
         </View>
       </View>
-      <DetailRowPair
+      <DetailRow
+        icon="time-outline"
+        label="Est. duration"
+        value={
+          pendingBooking.durationMinutes != null && pendingBooking.durationMinutes > 0
+            ? `${pendingBooking.durationMinutes} min`
+            : ''
+        }
         compact={compact}
         scale={scale}
-        left={{
-          icon: 'speedometer-outline',
-          label: 'Distance',
-          value: `${pendingBooking.distanceMiles} mi`,
-        }}
-        right={{
-          icon: 'time-outline',
-          label: 'Est. duration',
-          value:
-            pendingBooking.durationMinutes != null && pendingBooking.durationMinutes > 0
-              ? `${pendingBooking.durationMinutes} min`
-              : '',
-        }}
       />
     </View>
   );
@@ -415,19 +403,42 @@ export default function ReviewBookingScreen() {
         { maxWidth: maxContentWidth, alignSelf: 'center', width: '100%' },
       ]}
     >
-      <Pressable style={styles.backRow} onPress={goBackToEstimate}>
-        <Ionicons name="arrow-back" size={compact ? 20 : 22} color={colors.gold} />
-        {!compact ? <Text style={styles.backText}>Back to estimate</Text> : null}
-      </Pressable>
+      {compact ? (
+        <View style={styles.headerCompact}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.backRowCompact,
+              { width: backHitSize, height: backHitSize },
+              pressed && styles.backRowPressed,
+            ]}
+            onPress={goBackToEstimate}
+            accessibilityRole="button"
+            accessibilityLabel="Back to estimate"
+          >
+            <Ionicons name="arrow-back" size={backIconSize} color={colors.gold} />
+          </Pressable>
+          <View style={styles.headerTitleWrap}>
+            <Text style={[styles.title, styles.titleCompactHeader, { fontSize: titleSize }]}>
+              REVIEW YOUR BOOKING
+            </Text>
+          </View>
+          <View style={{ width: backHitSize }} />
+        </View>
+      ) : (
+        <>
+          <Pressable style={styles.backRow} onPress={goBackToEstimate}>
+            <Ionicons name="arrow-back" size={backIconSize} color={colors.gold} />
+            <Text style={styles.backText}>Back to estimate</Text>
+          </Pressable>
 
-      <View style={[styles.titleSection, compact && styles.titleSectionCompact]}>
-        <Text style={[styles.title, { fontSize: titleSize }]}>REVIEW YOUR BOOKING</Text>
-        {!compact ? (
-          <Text style={styles.subtitle}>
-            Please check your details and selected options before confirming.
-          </Text>
-        ) : null}
-      </View>
+          <View style={styles.titleSection}>
+            <Text style={[styles.title, { fontSize: titleSize }]}>REVIEW YOUR BOOKING</Text>
+            <Text style={styles.subtitle}>
+              Please check your details and selected options before confirming.
+            </Text>
+          </View>
+        </>
+      )}
 
       {compact ? (
         <View style={[styles.contentRow, { gap: columnGap }]}>
@@ -501,6 +512,32 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginBottom: 0,
   },
+  headerCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    marginBottom: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backRowCompact: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  backRowPressed: {
+    opacity: 0.75,
+  },
+  headerTitleWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleCompactHeader: {
+    marginBottom: 0,
+    textAlign: 'center',
+  },
   backText: {
     color: colors.gold,
     fontWeight: '600',
@@ -511,13 +548,6 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
     marginBottom: spacing.lg,
     gap: spacing.sm,
-  },
-  titleSectionCompact: {
-    marginTop: spacing.xs,
-    marginBottom: spacing.sm,
-    paddingBottom: spacing.xs,
-    borderBottomWidth: 1,
-    borderBottomColor: colors.border,
   },
   title: {
     color: colors.goldLight,
@@ -651,16 +681,6 @@ const styles = StyleSheet.create({
   vehicleImageCompact: {
     flex: 1,
     width: '100%',
-  },
-  serviceLine: {
-    color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
-    opacity: 0.9,
-    marginTop: 2,
-  },
-  serviceLineCompact: {
-    lineHeight: 20,
   },
   detailRow: {
     marginBottom: 14,

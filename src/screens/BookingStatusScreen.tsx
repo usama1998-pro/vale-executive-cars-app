@@ -1,3 +1,4 @@
+import { ReactNode } from 'react';
 import { Ionicons } from '@expo/vector-icons';
 import { ScrollView, StyleSheet, Text, View } from 'react-native';
 import AnimatedSuccessTick from '../components/booking/AnimatedSuccessTick';
@@ -8,8 +9,110 @@ import { useBooking } from '../context/BookingContext';
 import { useResponsive } from '../hooks/useResponsive';
 import { BOOKING_MESSAGES } from '../types/booking';
 import { colors, radius, spacing } from '../theme';
+import { isMeaningfulVia } from '../types/booking';
 import { formatPreferredPickup } from '../utils/dateTime';
-import { formatGBP } from '../utils/pricing';
+import { formatGBP, getVehicleLabel } from '../utils/pricing';
+
+const EMPTY_FIELD = '—';
+
+function displayText(value?: string | null): string {
+  const trimmed = value?.trim();
+  return trimmed ? trimmed : EMPTY_FIELD;
+}
+
+function SummaryField({
+  label,
+  value,
+  compact,
+  fontSize,
+  splitRow = false,
+}: {
+  label: string;
+  value: string;
+  compact: boolean;
+  fontSize: number;
+  splitRow?: boolean;
+}) {
+  if (compact && splitRow) {
+    return (
+      <View style={styles.summaryFieldRow}>
+        <Text style={[styles.summaryFieldLabel, { fontSize }]}>{label}</Text>
+        <Text
+          style={[styles.summaryFieldValue, { fontSize, lineHeight: Math.round(fontSize * 1.35) }]}
+          numberOfLines={2}
+          ellipsizeMode="tail"
+        >
+          {value}
+        </Text>
+      </View>
+    );
+  }
+
+  return (
+    <Text
+      style={[styles.summaryLine, compact && styles.summaryLineFit, { fontSize }]}
+      numberOfLines={compact ? 1 : undefined}
+      ellipsizeMode={compact ? 'tail' : undefined}
+    >
+      {label}: {value}
+    </Text>
+  );
+}
+
+function FareCard({
+  compact,
+  labelSize,
+  amountSize,
+  amount,
+}: {
+  compact: boolean;
+  labelSize: number;
+  amountSize: number;
+  amount: number;
+}) {
+  return (
+    <View style={[styles.fareCard, compact && styles.fareCardFit]}>
+      <Text style={[styles.fareLabel, { fontSize: labelSize }]}>ESTIMATED FARE</Text>
+      <Text style={[styles.fareAmount, { fontSize: amountSize }]}>{formatGBP(amount)}</Text>
+    </View>
+  );
+}
+
+function SummarySection({
+  title,
+  compact,
+  fontSize,
+  splitLayout = false,
+  children,
+}: {
+  title: string;
+  compact: boolean;
+  fontSize: number;
+  splitLayout?: boolean;
+  children: ReactNode;
+}) {
+  return (
+    <View
+      style={[
+        styles.summarySection,
+        styles.summarySectionBordered,
+        compact && styles.summarySectionFit,
+        splitLayout && styles.summarySectionSplit,
+      ]}
+    >
+      <Text
+        style={[
+          styles.summarySectionTitle,
+          splitLayout && styles.summarySectionTitleSplit,
+          { fontSize },
+        ]}
+      >
+        {title}
+      </Text>
+      {children}
+    </View>
+  );
+}
 
 export default function BookingStatusScreen() {
   const { submittedBooking, goHomeAndClearCache } = useBooking();
@@ -30,13 +133,18 @@ export default function BookingStatusScreen() {
 
   const compact = fitToScreen;
   const { status } = submittedBooking;
-  const panelMaxWidth = Math.min(maxContentWidth * (compact ? 0.5 : 0.72), compact ? 460 : 420);
+  const panelMaxWidth = Math.min(maxContentWidth * (compact ? 0.96 : 0.72), compact ? 960 : 420);
+  const splitSummary = compact;
+  const splitField = compact;
   const titleSize = Math.round((compact ? 30 : 28) * scale);
   const messageSize = Math.round((compact ? 17 : 17) * scale);
   const noticeSize = Math.round((compact ? 20 : 17) * scale);
   const referenceSize = Math.round((compact ? 22 : 22) * scale);
   const summarySize = Math.round((compact ? 16 : 17) * scale);
-  const fareSize = Math.round((compact ? 17 : 18) * scale);
+  const sectionTitleSize = Math.round((compact ? 16 : 17) * scale);
+  const summaryLabelSize = Math.round((compact ? 16 : 17) * scale);
+  const fareLabelSize = Math.round((compact ? 15 : 16) * scale);
+  const fareAmountSize = Math.round((compact ? 28 : 32) * scale);
   const tickSize = Math.round((compact ? 84 : 92) * scale);
   const pagePadding = {
     paddingHorizontal: contentPadding,
@@ -73,6 +181,16 @@ export default function BookingStatusScreen() {
 
   const config = statusConfig[status] ?? statusConfig.pending;
   const showSuccessTick = status === 'pending' || status === 'accepted';
+  const viaDisplay = isMeaningfulVia(submittedBooking.via)
+    ? submittedBooking.via.trim()
+    : EMPTY_FIELD;
+  const pickupDisplay = submittedBooking.preferredPickupAt
+    ? formatPreferredPickup(submittedBooking.preferredPickupAt)
+    : EMPTY_FIELD;
+  const durationDisplay =
+    submittedBooking.durationMinutes != null && submittedBooking.durationMinutes > 0
+      ? `${submittedBooking.durationMinutes} min`
+      : EMPTY_FIELD;
 
   const confettiSpread = Math.round(
     compact
@@ -102,11 +220,12 @@ export default function BookingStatusScreen() {
       </Text>
 
       {status === 'pending' ? (
-        <View style={[styles.noticeCard, compact && styles.noticeCardFit]}>
-          <Ionicons name="notifications-outline" size={Math.round((compact ? 28 : 26) * scale)} color={colors.gold} />
+        <View style={[styles.noticeCard, compact && styles.noticeCardFit, splitSummary && styles.noticeCardSplit]}>
+          <Ionicons name="notifications-outline" size={Math.round((compact ? 24 : 26) * scale)} color={colors.gold} />
           <Text
             style={[
               styles.noticeText,
+              splitSummary && styles.noticeTextSplit,
               { fontSize: noticeSize, lineHeight: Math.round(noticeSize * 1.45) },
             ]}
           >
@@ -116,40 +235,228 @@ export default function BookingStatusScreen() {
       ) : null}
 
       <View style={[styles.summaryCard, compact && styles.summaryCardFit]}>
-        <Text style={[styles.summaryLabel, { fontSize: Math.round((compact ? 14 : 15) * scale) }]}>
-          BOOKING REFERENCE
-        </Text>
-        <Text style={[styles.reference, compact && styles.referenceFit, { fontSize: referenceSize }]}>
-          {submittedBooking.bookingRef}
-        </Text>
+        <View style={[styles.summarySection, styles.summarySectionBordered, compact && styles.summarySectionFit]}>
+          <Text style={[styles.summaryLabel, { fontSize: summaryLabelSize }]}>BOOKING REFERENCE</Text>
+          <Text style={[styles.reference, compact && styles.referenceFit, { fontSize: referenceSize }]}>
+            {displayText(submittedBooking.bookingRef)}
+          </Text>
+        </View>
 
-        <Text
-          style={[styles.summaryLine, compact && styles.summaryLineFit, { fontSize: summarySize }]}
-          numberOfLines={compact ? 1 : undefined}
-          ellipsizeMode={compact ? 'tail' : undefined}
-        >
-          {submittedBooking.from} → {submittedBooking.to}
-        </Text>
-        {submittedBooking.preferredPickupAt ? (
-          <Text
-            style={[styles.summaryLine, compact && styles.summaryLineFit, { fontSize: summarySize }]}
-            numberOfLines={compact ? 1 : undefined}
-            ellipsizeMode={compact ? 'tail' : undefined}
-          >
-            Preferred pickup: {formatPreferredPickup(submittedBooking.preferredPickupAt)}
-          </Text>
-        ) : null}
-        {submittedBooking.roomNo ? (
-          <Text style={[styles.summaryLine, compact && styles.summaryLineFit, { fontSize: summarySize }]}>
-            Room no.: {submittedBooking.roomNo}
-          </Text>
-        ) : null}
-        <Text style={[styles.summaryLine, compact && styles.summaryLineFit, { fontSize: summarySize }]}>
-          Passengers: {submittedBooking.passengers ?? 1}
-        </Text>
-        <Text style={[styles.fareLine, compact && styles.fareLineFit, { fontSize: fareSize }]}>
-          Estimated fare: {formatGBP(submittedBooking.estimatedFare)}
-        </Text>
+        {splitSummary ? (
+          <View style={styles.summaryColumns}>
+            <View style={styles.summaryColumn}>
+              <SummarySection
+                title="CUSTOMER DETAILS"
+                compact={compact}
+                fontSize={sectionTitleSize}
+                splitLayout
+              >
+                <SummaryField
+                  label="Name"
+                  value={displayText(submittedBooking.customerName)}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
+                <SummaryField
+                  label="Phone"
+                  value={displayText(submittedBooking.contactNumber)}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
+                <SummaryField
+                  label="Email"
+                  value={displayText(submittedBooking.email)}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
+              </SummarySection>
+
+              <SummarySection
+                title="JOURNEY DETAILS"
+                compact={compact}
+                fontSize={sectionTitleSize}
+                splitLayout
+              >
+                <SummaryField
+                  label="Pickup"
+                  value={displayText(submittedBooking.from)}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
+                <SummaryField
+                  label="Drop-off"
+                  value={displayText(submittedBooking.to)}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
+                <SummaryField
+                  label="Passengers"
+                  value={String(submittedBooking.passengers ?? 1)}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
+                <SummaryField
+                  label="Room no."
+                  value={displayText(submittedBooking.roomNo)}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
+              </SummarySection>
+            </View>
+
+            <View style={styles.summaryColumn}>
+              <SummarySection
+                title="JOURNEY DETAILS"
+                compact={compact}
+                fontSize={sectionTitleSize}
+                splitLayout
+              >
+                <SummaryField
+                  label="Via"
+                  value={viaDisplay}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
+                <SummaryField
+                  label="Preferred pickup"
+                  value={pickupDisplay}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
+              </SummarySection>
+
+              <SummarySection
+                title="SELECTED VEHICLE"
+                compact={compact}
+                fontSize={sectionTitleSize}
+                splitLayout
+              >
+                <SummaryField
+                  label="Vehicle"
+                  value={getVehicleLabel(submittedBooking.vehicleType)}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
+                <SummaryField
+                  label="Distance"
+                  value={`${submittedBooking.distanceMiles} mi`}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
+                <SummaryField
+                  label="Est. duration"
+                  value={durationDisplay}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
+              </SummarySection>
+
+              <FareCard
+                compact={compact}
+                labelSize={fareLabelSize}
+                amountSize={fareAmountSize}
+                amount={submittedBooking.estimatedFare}
+              />
+            </View>
+          </View>
+        ) : (
+          <>
+            <SummarySection title="CUSTOMER DETAILS" compact={compact} fontSize={sectionTitleSize}>
+              <SummaryField
+                label="Name"
+                value={displayText(submittedBooking.customerName)}
+                compact={compact}
+                fontSize={summarySize}
+              />
+              <SummaryField
+                label="Phone"
+                value={displayText(submittedBooking.contactNumber)}
+                compact={compact}
+                fontSize={summarySize}
+              />
+              <SummaryField
+                label="Email"
+                value={displayText(submittedBooking.email)}
+                compact={compact}
+                fontSize={summarySize}
+              />
+            </SummarySection>
+
+            <SummarySection title="JOURNEY DETAILS" compact={compact} fontSize={sectionTitleSize}>
+              <SummaryField
+                label="Pickup"
+                value={displayText(submittedBooking.from)}
+                compact={compact}
+                fontSize={summarySize}
+              />
+              <SummaryField
+                label="Drop-off"
+                value={displayText(submittedBooking.to)}
+                compact={compact}
+                fontSize={summarySize}
+              />
+              <SummaryField
+                label="Passengers"
+                value={String(submittedBooking.passengers ?? 1)}
+                compact={compact}
+                fontSize={summarySize}
+              />
+              <SummaryField
+                label="Room no."
+                value={displayText(submittedBooking.roomNo)}
+                compact={compact}
+                fontSize={summarySize}
+              />
+              <SummaryField label="Via" value={viaDisplay} compact={compact} fontSize={summarySize} />
+              <SummaryField
+                label="Preferred pickup"
+                value={pickupDisplay}
+                compact={compact}
+                fontSize={summarySize}
+              />
+            </SummarySection>
+
+            <SummarySection title="SELECTED VEHICLE" compact={compact} fontSize={sectionTitleSize}>
+              <SummaryField
+                label="Vehicle"
+                value={getVehicleLabel(submittedBooking.vehicleType)}
+                compact={compact}
+                fontSize={summarySize}
+              />
+              <SummaryField
+                label="Distance"
+                value={`${submittedBooking.distanceMiles} mi`}
+                compact={compact}
+                fontSize={summarySize}
+              />
+              <SummaryField
+                label="Est. duration"
+                value={durationDisplay}
+                compact={compact}
+                fontSize={summarySize}
+              />
+            </SummarySection>
+
+            <FareCard
+              compact={compact}
+              labelSize={fareLabelSize}
+              amountSize={fareAmountSize}
+              amount={submittedBooking.estimatedFare}
+            />
+          </>
+        )}
       </View>
 
       <GoldButton
@@ -180,18 +487,14 @@ export default function BookingStatusScreen() {
           />
         </View>
       ) : null}
-      {compact ? (
-        <View style={[styles.pageShell, pagePadding]}>{panelBody}</View>
-      ) : (
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={[styles.scroll, pagePadding]}
-          showsVerticalScrollIndicator={false}
-          bounces={false}
-        >
-          {panelBody}
-        </ScrollView>
-      )}
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={[styles.scroll, pagePadding, compact && styles.scrollCompact]}
+        showsVerticalScrollIndicator={compact}
+        bounces={false}
+      >
+        {panelBody}
+      </ScrollView>
     </Screen>
   );
 }
@@ -215,13 +518,6 @@ const styles = StyleSheet.create({
     right: spacing.xl,
     bottom: spacing.lg,
   },
-  pageShell: {
-    flex: 1,
-    minHeight: 0,
-    alignItems: 'center',
-    justifyContent: 'flex-start',
-    overflow: 'hidden',
-  },
   scrollView: {
     flex: 1,
     overflow: 'hidden',
@@ -229,6 +525,9 @@ const styles = StyleSheet.create({
   scroll: {
     flexGrow: 1,
     alignItems: 'center',
+    justifyContent: 'flex-start',
+  },
+  scrollCompact: {
     justifyContent: 'flex-start',
   },
   panel: {
@@ -289,29 +588,33 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xs,
     gap: spacing.xs,
   },
+  noticeCardSplit: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+  },
   noticeText: {
     color: colors.textMuted,
     textAlign: 'center',
     fontWeight: '600',
   },
+  noticeTextSplit: {
+    flex: 1,
+    textAlign: 'left',
+  },
   summaryCard: {
     width: '100%',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: colors.border,
-    borderRadius: radius.md,
-    padding: spacing.lg,
-    backgroundColor: colors.backgroundPanel,
-    marginBottom: spacing.lg,
+    alignItems: 'stretch',
+    gap: spacing.md,
+    marginBottom: spacing.sm,
   },
   summaryCardFit: {
-    paddingVertical: spacing.sm,
-    paddingHorizontal: spacing.md,
+    gap: spacing.sm,
     marginBottom: spacing.xs,
   },
   summaryLabel: {
     color: colors.gold,
-    fontWeight: '700',
+    fontWeight: '800',
     letterSpacing: 1,
     marginBottom: spacing.sm,
     textAlign: 'center',
@@ -319,14 +622,75 @@ const styles = StyleSheet.create({
   reference: {
     color: colors.goldLight,
     fontWeight: '700',
-    marginBottom: spacing.md,
+    marginBottom: 0,
     textAlign: 'center',
   },
   referenceFit: {
-    marginBottom: spacing.xs,
+    marginBottom: 0,
+  },
+  summarySection: {
+    width: '100%',
+    alignItems: 'center',
+  },
+  summarySectionBordered: {
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    padding: spacing.md,
+    backgroundColor: colors.backgroundPanel,
+  },
+  summarySectionFit: {
+    padding: spacing.sm,
+  },
+  summarySectionSplit: {
+    alignItems: 'stretch',
+  },
+  summaryColumns: {
+    width: '100%',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    gap: spacing.lg,
+    marginTop: spacing.sm,
+  },
+  summaryColumn: {
+    flex: 1,
+    minWidth: 0,
+    gap: spacing.lg,
+  },
+  summarySectionTitle: {
+    color: colors.gold,
+    fontWeight: '800',
+    letterSpacing: 1,
+    marginBottom: spacing.sm,
+    textAlign: 'center',
+  },
+  summarySectionTitleSplit: {
+    textAlign: 'left',
+    marginTop: spacing.xs,
+    marginBottom: spacing.sm,
+  },
+  summaryFieldRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: 4,
+  },
+  summaryFieldLabel: {
+    color: colors.textMuted,
+    fontWeight: '700',
+    flexShrink: 0,
+    minWidth: 88,
+  },
+  summaryFieldValue: {
+    color: colors.text,
+    flex: 1,
+    textAlign: 'right',
+    fontWeight: '700',
   },
   summaryLine: {
     color: colors.text,
+    fontWeight: '700',
     marginBottom: spacing.sm,
     lineHeight: 24,
     textAlign: 'center',
@@ -335,14 +699,33 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     lineHeight: 22,
   },
-  fareLine: {
+  fareCard: {
+    width: '100%',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    borderRadius: radius.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.lg,
+    backgroundColor: colors.backgroundPanel,
+    marginBottom: spacing.sm,
+    gap: spacing.xs,
+  },
+  fareCardFit: {
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    marginBottom: spacing.xs,
+  },
+  fareLabel: {
     color: colors.gold,
-    fontWeight: '700',
-    marginTop: spacing.xs,
+    fontWeight: '800',
+    letterSpacing: 1,
     textAlign: 'center',
   },
-  fareLineFit: {
-    marginTop: 2,
+  fareAmount: {
+    color: colors.goldLight,
+    fontWeight: '800',
+    textAlign: 'center',
   },
   homeButton: {
     alignSelf: 'stretch',

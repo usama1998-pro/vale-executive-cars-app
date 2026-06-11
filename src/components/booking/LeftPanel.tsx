@@ -5,7 +5,6 @@ import GoldButton from './GoldButton';
 
 const LOGO = require('../../../assets/vale-executive-brand-logo.png');
 const WHATSAPP_URL = 'https://wa.me/447708044445';
-const WEBSITE_URL = 'https://www.valeexecutive.com';
 const QR_IMAGE =
   'https://api.qrserver.com/v1/create-qr-code/?size=512x512&margin=2&ecc=M&data=' +
   encodeURIComponent(WHATSAPP_URL);
@@ -117,14 +116,13 @@ export default function LeftPanel({
         <Text style={[styles.body, { fontSize: airportBodySize, lineHeight: airportBodySize * 1.4 }]}>
           For all airport transfer bookings, please visit:
         </Text>
-        <GoldButton
-          label="www.valeexecutive.com"
-          icon="open-outline"
-          variant="outline"
-          scale={scale}
-          style={styles.linkButton}
-          onPress={() => Linking.openURL(WEBSITE_URL)}
-        />
+        <View pointerEvents="none" style={styles.linkButton}>
+          <GoldButton
+            label="www.valeexecutive.com"
+            variant="outline"
+            scale={scale}
+          />
+        </View>
       </View>
 
       <View

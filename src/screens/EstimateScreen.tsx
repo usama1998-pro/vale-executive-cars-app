@@ -52,8 +52,11 @@ export default function EstimateScreen() {
   const compact = fitToScreen;
   const quoteReady = !isCalculatingQuote && pendingBooking.distanceMiles > 0;
   const selectedVehicle = VEHICLES.find((v) => v.type === pendingBooking.vehicleType);
-  const imageHeight = Math.round((compact ? 188 : isWide ? 170 : 180) * scale);
+  const imageHeight = Math.round((compact ? 190 : isWide ? 175 : 185) * scale);
   const titleSize = Math.round((compact ? 28 : 22) * scale);
+  const vehicleTitleSize = Math.round((compact ? (isWide ? 36 : 32) : 24) * scale);
+  const backIconSize = Math.round((compact ? 32 : 20) * scale);
+  const backHitSize = backIconSize + Math.round(spacing.md * 2);
   const pagePadding = {
     paddingHorizontal: contentPadding,
     paddingTop: screenPaddingTop,
@@ -80,11 +83,10 @@ export default function EstimateScreen() {
                 style={[
                   styles.skeletonBlock,
                   styles.skeletonImage,
-                  compact && { height: imageHeight },
+                  { height: imageHeight },
                 ]}
               />
               <View style={[styles.skeletonBlock, styles.skeletonTitle]} />
-              <View style={[styles.skeletonBlock, styles.skeletonLine]} />
             </View>
             <View style={[styles.skeletonBlock, styles.skeletonFare]} />
           </View>
@@ -131,25 +133,18 @@ export default function EstimateScreen() {
                   accessibilityLabel={`${vehicle.title} vehicle`}
                 />
 
-                <Text style={[styles.priceCardTitle, compact && styles.priceCardTitleCompact]}>
+                <Text
+                  style={[
+                    styles.priceCardTitle,
+                    compact && styles.priceCardTitleCompact,
+                    { fontSize: vehicleTitleSize },
+                  ]}
+                >
                   {vehicle.title}
                 </Text>
                 <Text style={[styles.priceCardTagline, compact && styles.priceCardTaglineCompact]}>
                   {vehicle.tagline}
                 </Text>
-
-                <View style={[styles.priceLinesWrap, compact && styles.priceLinesWrapCompact]}>
-                  {vehicle.lines.map((line) => (
-                    <View key={line} style={styles.priceLineRow}>
-                      <Ionicons name="checkmark-circle" size={compact ? 15 : 14} color={colors.gold} />
-                      <Text
-                        style={[styles.priceLine, compact && styles.priceLineCompact]}
-                      >
-                        {line}
-                      </Text>
-                    </View>
-                  ))}
-                </View>
               </View>
 
               <View style={[styles.farePill, compact && styles.farePillCompact, selected && styles.farePillSelected]}>
@@ -183,90 +178,111 @@ export default function EstimateScreen() {
         { maxWidth: maxContentWidth, alignSelf: 'center', width: '100%' },
       ]}
     >
-      <Pressable style={styles.backRow} onPress={goHome} disabled={isCalculatingQuote}>
-        <Ionicons name="arrow-back" size={compact ? 18 : 20} color={colors.gold} />
-        {!compact ? <Text style={styles.backText}>Back to booking</Text> : null}
-      </Pressable>
+      {compact ? (
+        <View style={styles.headerCompact}>
+          <Pressable
+            style={({ pressed }) => [
+              styles.backRowCompact,
+              { width: backHitSize, height: backHitSize },
+              pressed && styles.backRowPressed,
+            ]}
+            onPress={goHome}
+            disabled={isCalculatingQuote}
+            accessibilityRole="button"
+            accessibilityLabel="Back to booking"
+          >
+            <Ionicons name="arrow-back" size={backIconSize} color={colors.gold} />
+          </Pressable>
+          <View style={styles.headerTitleWrap}>
+            <Text style={[styles.title, styles.titleCompactHeader, { fontSize: titleSize }]}>
+              ESTIMATED COST
+            </Text>
+          </View>
+          <View style={{ width: backHitSize }} />
+        </View>
+      ) : (
+        <>
+          <Pressable style={styles.backRow} onPress={goHome} disabled={isCalculatingQuote}>
+            <Ionicons name="arrow-back" size={backIconSize} color={colors.gold} />
+            <Text style={styles.backText}>Back to booking</Text>
+          </Pressable>
 
-      <View style={[styles.titleSection, compact && styles.titleSectionCompact]}>
-        <Text style={[styles.title, { fontSize: titleSize }]}>ESTIMATED COST</Text>
+          <View style={styles.titleSection}>
+            <Text style={[styles.title, { fontSize: titleSize }]}>ESTIMATED COST</Text>
+            <Text style={styles.subtitle}>
+              {isCalculatingQuote
+                ? 'Calculating your route and fare…'
+                : 'Choose the service that suits your journey.'}
+            </Text>
+          </View>
+        </>
+      )}
+
+      <View style={compact ? styles.landscapeBody : undefined}>
+        <View style={styles.routeWrap}>
+          <JourneyRouteDisplay
+            from={pendingBooking.from}
+            to={pendingBooking.to}
+            compact={compact}
+            scale={scale}
+          />
+        </View>
+
+        {isCalculatingQuote && !compact ? <EstimateLoader scale={scale} /> : null}
+
         {!compact ? (
-          <Text style={styles.subtitle}>
-            {isCalculatingQuote
-              ? 'Calculating your route and fare…'
-              : 'Choose the service that suits your journey.'}
+          <View style={styles.sectionHeaderRow}>
+            <Text style={styles.sectionTitle}>SELECT YOUR VEHICLE</Text>
+          </View>
+        ) : null}
+
+        <View style={compact ? styles.cardsAndFooter : undefined}>
+          <View
+            style={[
+              styles.pricingGrid,
+              compact && styles.pricingGridFit,
+              isWide && styles.pricingGridThreeCol,
+              compact && isWide && styles.pricingGridThreeColCompact,
+              isTablet && !isWide && styles.pricingGridTwoCol,
+              { gap: columnGap },
+            ]}
+          >
+            {renderVehicleCards()}
+          </View>
+
+          <View style={[styles.footerRow, compact && styles.footerRowCompact]}>
+            <View style={[styles.totalCard, compact && styles.totalCardCompact]}>
+              <View style={styles.totalLeft}>
+                <Text style={[styles.totalLabel, compact && styles.totalLabelCompact]}>
+                  ESTIMATED TOTAL
+                </Text>
+                <Text style={[styles.totalMeta, compact && styles.totalMetaCompact]} numberOfLines={1}>
+                  {selectedVehicle?.title}
+                </Text>
+              </View>
+              <Text style={[styles.totalAmount, { fontSize: Math.round((compact ? 26 : 34) * scale) }]}>
+                {quoteReady ? formatGBP(pendingBooking.estimatedFare) : '—'}
+              </Text>
+            </View>
+
+            <GoldButton
+              label={isCalculatingQuote ? 'CALCULATING…' : compact ? 'REVIEW DETAILS' : 'REVIEW BOOKING DETAILS'}
+              icon="document-text-outline"
+              scale={compact ? scale * 0.88 : scale}
+              style={[styles.confirmButton, compact && styles.confirmButtonCompact]}
+              onPress={goToReview}
+              disabled={!quoteReady}
+              loading={isCalculatingQuote}
+            />
+          </View>
+        </View>
+
+        {!compact ? (
+          <Text style={styles.footnote}>
+            Distance is calculated automatically from your pickup and drop-off addresses.
           </Text>
         ) : null}
       </View>
-
-      <View style={styles.routeWrap}>
-        <JourneyRouteDisplay
-          from={pendingBooking.from}
-          to={pendingBooking.to}
-          compact={compact}
-          scale={scale}
-        />
-      </View>
-
-      {isCalculatingQuote && !compact ? <EstimateLoader scale={scale} /> : null}
-
-      {!compact ? (
-        <View style={styles.sectionHeaderRow}>
-          <Text style={styles.sectionTitle}>SELECT YOUR SERVICE</Text>
-        </View>
-      ) : null}
-
-      <View
-        style={[
-          compact ? styles.cardsAndFooter : undefined,
-          compact && styles.cardsAndFooterRaised,
-        ]}
-      >
-        <View
-          style={[
-            styles.pricingGrid,
-            compact && styles.pricingGridFit,
-            isWide && styles.pricingGridThreeCol,
-            compact && isWide && styles.pricingGridThreeColCompact,
-            isTablet && !isWide && styles.pricingGridTwoCol,
-            { gap: columnGap },
-          ]}
-        >
-          {renderVehicleCards()}
-        </View>
-
-        <View style={[styles.footerRow, compact && styles.footerRowCompact]}>
-          <View style={[styles.totalCard, compact && styles.totalCardCompact]}>
-            <View style={styles.totalLeft}>
-              <Text style={[styles.totalLabel, compact && styles.totalLabelCompact]}>
-                ESTIMATED TOTAL
-              </Text>
-              <Text style={[styles.totalMeta, compact && styles.totalMetaCompact]} numberOfLines={1}>
-                {selectedVehicle?.title}
-              </Text>
-            </View>
-            <Text style={[styles.totalAmount, { fontSize: Math.round((compact ? 26 : 34) * scale) }]}>
-              {quoteReady ? formatGBP(pendingBooking.estimatedFare) : '—'}
-            </Text>
-          </View>
-
-          <GoldButton
-            label={isCalculatingQuote ? 'CALCULATING…' : compact ? 'REVIEW DETAILS' : 'REVIEW BOOKING DETAILS'}
-            icon="document-text-outline"
-            scale={compact ? scale * 0.88 : scale}
-            style={[styles.confirmButton, compact && styles.confirmButtonCompact]}
-            onPress={goToReview}
-            disabled={!quoteReady}
-            loading={isCalculatingQuote}
-          />
-        </View>
-      </View>
-
-      {!compact ? (
-        <Text style={styles.footnote}>
-          Distance is calculated automatically from your pickup and drop-off addresses.
-        </Text>
-      ) : null}
     </View>
   );
 
@@ -310,13 +326,15 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
   },
-  cardsAndFooter: {
+  landscapeBody: {
     flex: 1,
     minHeight: 0,
-    justifyContent: 'flex-start',
+    width: '100%',
+    justifyContent: 'center',
   },
-  cardsAndFooterRaised: {
-    marginTop: -spacing.sm,
+  cardsAndFooter: {
+    flexGrow: 0,
+    justifyContent: 'flex-start',
   },
   routeWrap: {
     marginBottom: spacing.sm,
@@ -328,6 +346,32 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
     marginBottom: 0,
   },
+  headerCompact: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingTop: spacing.md,
+    paddingBottom: spacing.sm,
+    marginBottom: spacing.xs,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  backRowCompact: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexShrink: 0,
+  },
+  backRowPressed: {
+    opacity: 0.75,
+  },
+  headerTitleWrap: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  titleCompactHeader: {
+    marginBottom: 0,
+    textAlign: 'center',
+  },
   titleSection: {
     alignItems: 'center',
     marginTop: spacing.xs,
@@ -335,11 +379,6 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.sm,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
-  },
-  titleSectionCompact: {
-    marginTop: spacing.xs,
-    marginBottom: spacing.xs,
-    paddingBottom: spacing.xs,
   },
   backText: {
     color: colors.gold,
@@ -396,10 +435,10 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: colors.border,
     borderRadius: radius.md,
-    paddingVertical: spacing.lg,
+    paddingVertical: spacing.md,
     paddingHorizontal: spacing.md,
     marginBottom: spacing.sm,
-    minHeight: 390,
+    minHeight: 320,
     backgroundColor: colors.inputBg,
   },
   priceCardColumn: {
@@ -409,10 +448,10 @@ const styles = StyleSheet.create({
     flex: 1,
     alignSelf: 'stretch',
     minWidth: 0,
-    minHeight: 460,
+    minHeight: 380,
     marginBottom: 0,
-    paddingVertical: spacing.lg,
-    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.sm,
   },
   priceCardContent: {
     flex: 1,
@@ -476,60 +515,33 @@ const styles = StyleSheet.create({
   },
   vehicleImage: {
     width: '100%',
-    marginTop: spacing.sm,
-    marginBottom: spacing.sm,
+    marginTop: spacing.xs,
+    marginBottom: spacing.xs,
   },
   vehicleImageCompact: {
-    marginTop: spacing.xs,
-    marginBottom: spacing.sm,
+    marginTop: 2,
+    marginBottom: spacing.xs,
     width: '100%',
   },
   priceCardTitle: {
     color: colors.goldLight,
     fontWeight: '700',
-    fontSize: 18,
     letterSpacing: 0.5,
   },
   priceCardTitleCompact: {
-    fontSize: 19,
     textAlign: 'center',
   },
   priceCardTagline: {
     color: colors.textMuted,
     fontSize: 14,
     marginTop: 2,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.xs,
     opacity: 0.8,
   },
   priceCardTaglineCompact: {
     fontSize: 14,
     textAlign: 'center',
-    marginBottom: spacing.xs,
-  },
-  priceLinesWrap: {
-    gap: 4,
-    marginBottom: spacing.sm,
-  },
-  priceLinesWrapCompact: {
-    flex: 1,
-    marginBottom: spacing.xs,
-    width: '100%',
-    gap: 6,
-  },
-  priceLineRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: 6,
-  },
-  priceLine: {
-    flex: 1,
-    color: colors.textMuted,
-    fontSize: 14,
-    lineHeight: 20,
-  },
-  priceLineCompact: {
-    fontSize: 14,
-    lineHeight: 21,
+    marginBottom: 4,
   },
   farePill: {
     marginTop: 'auto',
@@ -539,12 +551,12 @@ const styles = StyleSheet.create({
     borderRadius: radius.sm,
     borderWidth: 1,
     borderColor: colors.border,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    paddingVertical: 6,
+    paddingHorizontal: 10,
   },
   farePillCompact: {
-    paddingVertical: 10,
-    paddingHorizontal: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 10,
     width: '100%',
   },
   farePillSelected: {
@@ -572,7 +584,7 @@ const styles = StyleSheet.create({
     color: colors.buttonText,
   },
   skeletonCard: {
-    minHeight: 390,
+    minHeight: 320,
   },
   skeletonCardCompact: {
     minHeight: 0,
@@ -584,22 +596,16 @@ const styles = StyleSheet.create({
   },
   skeletonImage: {
     width: '100%',
-    height: 130,
-    marginBottom: spacing.md,
+    marginBottom: spacing.sm,
   },
   skeletonTitle: {
     width: '55%',
     height: 18,
     marginBottom: spacing.sm,
   },
-  skeletonLine: {
-    width: '85%',
-    height: 12,
-    marginBottom: spacing.sm,
-  },
   skeletonFare: {
     width: '100%',
-    height: 44,
+    height: 38,
     marginTop: 'auto',
   },
   footerRow: {

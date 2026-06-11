@@ -214,6 +214,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
   const goHomeAndClearCache = useCallback(async () => {
     await initializeHomeForm();
     setSubmittedBooking(null);
+    setStartSplashDismissed(false);
     setScreen('home');
   }, [initializeHomeForm]);
 
