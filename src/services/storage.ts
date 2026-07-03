@@ -14,12 +14,14 @@ function normalizeBooking(item: Partial<BookingDetails>): BookingDetails {
     from: item.from ?? '',
     roomNo: item.roomNo ?? '',
     passengers: item.passengers ?? undefined,
-    via: item.via ?? '',
+    note: item.note ?? '',
     to: item.to ?? '',
     preferredPickupAt:
       item.preferredPickupAt ??
       (item as { preferredTime?: string }).preferredTime ??
       '',
+    returnPickupAt: item.returnPickupAt ?? '',
+    tripType: item.tripType ?? 'one-way',
     distanceMiles: item.distanceMiles ?? 0,
     distanceKm: item.distanceKm ?? item.distanceMiles ?? 0,
     vehicleType: item.vehicleType ?? 'executive',

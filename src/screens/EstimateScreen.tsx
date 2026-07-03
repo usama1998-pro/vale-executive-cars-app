@@ -28,6 +28,7 @@ export default function EstimateScreen() {
   const {
     pendingBooking,
     goHome,
+    goHomeAndClearCache,
     updatePendingVehicle,
     goToReview,
     isCalculatingQuote,
@@ -52,6 +53,7 @@ export default function EstimateScreen() {
   const compact = fitToScreen;
   const quoteReady = !isCalculatingQuote && pendingBooking.distanceMiles > 0;
   const selectedVehicle = VEHICLES.find((v) => v.type === pendingBooking.vehicleType);
+  const tripMultiplier = pendingBooking.tripType === 'return' ? 2 : 1;
   const imageHeight = Math.round((compact ? 190 : isWide ? 175 : 185) * scale);
   const titleSize = Math.round((compact ? 28 : 22) * scale);
   const vehicleTitleSize = Math.round((compact ? (isWide ? 36 : 32) : 24) * scale);
@@ -93,7 +95,7 @@ export default function EstimateScreen() {
         ))
       : VEHICLES.map((vehicle) => {
           const selected = pendingBooking.vehicleType === vehicle.type;
-          const previewFare = quoteFares ? quoteFares[vehicle.type] : 0;
+          const previewFare = quoteFares ? quoteFares[vehicle.type] * tripMultiplier : 0;
           return (
             <Pressable
               key={vehicle.type}
@@ -257,7 +259,7 @@ export default function EstimateScreen() {
                   ESTIMATED TOTAL
                 </Text>
                 <Text style={[styles.totalMeta, compact && styles.totalMetaCompact]} numberOfLines={1}>
-                  {selectedVehicle?.title}
+                  {`${selectedVehicle?.title ?? ''}${pendingBooking.tripType === 'return' ? ' • RETURN TRIP' : ' • ONE WAY'}`}
                 </Text>
               </View>
               <Text style={[styles.totalAmount, { fontSize: Math.round((compact ? 26 : 34) * scale) }]}>
@@ -265,15 +267,27 @@ export default function EstimateScreen() {
               </Text>
             </View>
 
-            <GoldButton
-              label={isCalculatingQuote ? 'CALCULATING…' : compact ? 'REVIEW DETAILS' : 'REVIEW BOOKING DETAILS'}
-              icon="document-text-outline"
-              scale={compact ? scale * 0.88 : scale}
-              style={[styles.confirmButton, compact && styles.confirmButtonCompact]}
-              onPress={goToReview}
-              disabled={!quoteReady}
-              loading={isCalculatingQuote}
-            />
+            <View style={compact ? styles.actionsCompact : styles.actions}>
+              <GoldButton
+                label={isCalculatingQuote ? 'CALCULATING…' : compact ? 'REVIEW DETAILS' : 'REVIEW BOOKING DETAILS'}
+                icon="document-text-outline"
+                scale={compact ? scale * 0.88 : scale}
+                style={[styles.confirmButton, compact && styles.confirmButtonCompact]}
+                onPress={goToReview}
+                disabled={!quoteReady}
+                loading={isCalculatingQuote}
+              />
+
+              <GoldButton
+                label="CANCEL"
+                icon="close"
+                variant="outline"
+                scale={compact ? scale * 0.88 : scale}
+                style={[styles.cancelButton, compact && styles.cancelButtonCompact]}
+                onPress={goHomeAndClearCache}
+                disabled={isCalculatingQuote}
+              />
+            </View>
           </View>
         </View>
 
@@ -443,6 +457,7 @@ const styles = StyleSheet.create({
   },
   priceCardColumn: {
     flexDirection: 'column',
+    gap: spacing.lg,
   },
   priceCardCompact: {
     flex: 1,
@@ -457,6 +472,7 @@ const styles = StyleSheet.create({
     flex: 1,
     minHeight: 0,
     width: '100%',
+    paddingBottom: spacing.sm,
   },
   priceCardCol: {
     flex: 1,
@@ -534,17 +550,19 @@ const styles = StyleSheet.create({
   priceCardTagline: {
     color: colors.textMuted,
     fontSize: 14,
-    marginTop: 2,
-    marginBottom: spacing.xs,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
     opacity: 0.8,
   },
   priceCardTaglineCompact: {
     fontSize: 14,
     textAlign: 'center',
-    marginBottom: 4,
+    marginTop: spacing.md,
+    marginBottom: spacing.lg,
   },
   farePill: {
     marginTop: 'auto',
+    marginBottom: spacing.sm,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
@@ -664,16 +682,37 @@ const styles = StyleSheet.create({
     color: colors.goldLight,
     fontWeight: '800',
   },
+  actions: {
+    width: '100%',
+  },
+  actionsCompact: {
+    flex: 1.25,
+    flexDirection: 'row',
+    alignItems: 'stretch',
+    gap: spacing.sm,
+  },
   confirmButton: {
     alignSelf: 'stretch',
     marginBottom: spacing.sm,
   },
   confirmButtonCompact: {
     flex: 1,
-    minWidth: 180,
+    minWidth: 0,
     marginBottom: 0,
     alignSelf: 'stretch',
     justifyContent: 'center',
+  },
+  cancelButton: {
+    alignSelf: 'stretch',
+    marginBottom: spacing.sm,
+  },
+  cancelButtonCompact: {
+    flex: 1,
+    minWidth: 0,
+    marginBottom: 0,
+    alignSelf: 'stretch',
+    justifyContent: 'center',
+    paddingHorizontal: spacing.md,
   },
   footnote: {
     color: colors.textMuted,

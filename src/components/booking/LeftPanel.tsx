@@ -29,6 +29,9 @@ export default function LeftPanel({
   webFit = false,
 }: LeftPanelProps) {
   const tight = compact || dense || webFit;
+  const headingSize = Math.round(
+    (dense ? 17 : compact ? 19 : isWeb ? 25 : isWide ? 26 : 23) * scale,
+  );
   const noticeSize = Math.round(
     (dense ? 11 : isWide ? 16 : isWeb ? 14 : 13) * scale,
   );
@@ -62,15 +65,20 @@ export default function LeftPanel({
   const content = (
     <>
       <View style={[styles.logoSection, { marginBottom: blockGap }]}>
-        <Image
-          source={LOGO}
-          style={[
-            styles.logo,
-            { height: logoHeight, maxWidth: isWide ? '100%' : 440 },
-          ]}
-          resizeMode="contain"
-          accessibilityLabel="Vale Executives Cars logo"
-        />
+        <View style={styles.logoWrap}>
+          <Image
+            source={LOGO}
+            style={[
+              styles.logo,
+              { height: logoHeight, maxWidth: isWide ? '100%' : 440 },
+            ]}
+            resizeMode="contain"
+            accessibilityLabel="Vale Executives Cars logo"
+          />
+        </View>
+        <Text style={[styles.formHeading, { fontSize: headingSize }]}>
+          BOOK YOUR EXECUTIVE TAXI
+        </Text>
       </View>
 
       <View
@@ -240,9 +248,22 @@ const styles = StyleSheet.create({
   },
   logoSection: {
     alignItems: 'center',
+    width: '100%',
+  },
+  logoWrap: {
+    width: '100%',
+    alignItems: 'center',
   },
   logo: {
     width: '100%',
+  },
+  formHeading: {
+    color: colors.goldLight,
+    fontWeight: '700',
+    letterSpacing: 1,
+    textAlign: 'center',
+    alignSelf: 'stretch',
+    marginTop: spacing.sm,
   },
   sectionBox: {
     alignItems: 'center',

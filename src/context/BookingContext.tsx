@@ -19,7 +19,7 @@ import {
   BookingDetails,
   BookingFormData,
   EMPTY_BOOKING_FORM,
-  isMeaningfulVia,
+  TripType,
   VehicleType,
 } from '../types/booking';
 import { getDefaultPickupDate } from '../utils/dateTime';
@@ -60,6 +60,12 @@ function createLocalId() {
 
 function isValidEmail(value: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+}
+
+function applyTripFareMultiplier(baseFare: number, tripType: TripType): number {
+  return tripType === 'return'
+    ? Math.round(baseFare * 2 * 100) / 100
+    : Math.round(baseFare * 100) / 100;
 }
 
 export function BookingProvider({ children }: { children: ReactNode }) {
@@ -108,10 +114,12 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       from: form.from.trim(),
       roomNo: form.roomNo.trim(),
       passengers: parsePassengerCount(form.passengers),
-      via: form.via.trim(),
+      note: form.note.trim(),
       to: form.to.trim(),
       preferredPickupAt:
         form.preferredPickupAt.trim() || getDefaultPickupDate().toISOString(),
+      returnPickupAt: form.returnPickupAt.trim(),
+      tripType: form.tripType,
     };
 
     if (
@@ -150,6 +158,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       distanceKm: 0,
       vehicleType,
       estimatedFare: 0,
+      returnPickupAt: trimmed.returnPickupAt || undefined,
+      tripType: trimmed.tripType,
       status: 'draft',
       createdAt: new Date().toISOString(),
     };
@@ -163,7 +173,6 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       const quote = await fetchRouteQuote({
         from: trimmed.from,
         to: trimmed.to,
-        via: isMeaningfulVia(trimmed.via) ? trimmed.via : undefined,
         vehicleType,
       });
 
@@ -176,7 +185,10 @@ export function BookingProvider({ children }: { children: ReactNode }) {
           distanceKm: quote.distanceKm,
           durationMinutes: quote.durationMinutes,
           vehicleType,
-          estimatedFare: quote.fares[vehicleType],
+          estimatedFare: applyTripFareMultiplier(
+            quote.fares[vehicleType],
+            prev.tripType ?? 'one-way',
+          ),
         };
       });
     } catch (error) {
@@ -225,8 +237,11 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         ...prev,
         vehicleType,
         estimatedFare:
-          quoteFares?.[vehicleType] ??
-          calculateFare(prev.distanceMiles, vehicleType),
+          applyTripFareMultiplier(
+            quoteFares?.[vehicleType] ??
+              calculateFare(prev.distanceMiles, vehicleType),
+            prev.tripType ?? 'one-way',
+          ),
       };
     });
   }, [quoteFares]);
@@ -243,12 +258,14 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         from: pendingBooking.from,
         roomNo: pendingBooking.roomNo?.trim() || undefined,
         passengers: pendingBooking.passengers,
+        note: pendingBooking.note?.trim() || undefined,
         to: pendingBooking.to,
-        via: isMeaningfulVia(pendingBooking.via) ? pendingBooking.via : 'car',
-        distanceMiles: Math.round(pendingBooking.distanceMiles),
-        estimatedFare: Math.round(pendingBooking.estimatedFare),
+        distanceMiles: pendingBooking.distanceMiles,
+        estimatedFare: pendingBooking.estimatedFare,
         vehicleType: pendingBooking.vehicleType,
+        tripType: pendingBooking.tripType ?? 'one-way',
         preferredPickupAt: pendingBooking.preferredPickupAt,
+        returnPickupAt: pendingBooking.returnPickupAt || undefined,
         submittedAt: new Date().toISOString(),
       });
 

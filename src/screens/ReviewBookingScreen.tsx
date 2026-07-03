@@ -6,7 +6,6 @@ import { getVehicleOption } from '../constants/vehicleOptions';
 import GoldButton from '../components/booking/GoldButton';
 import Screen from '../components/Screen';
 import { useBooking } from '../context/BookingContext';
-import { isMeaningfulVia } from '../types/booking';
 import { useResponsive } from '../hooks/useResponsive';
 import { colors, radius, spacing } from '../theme';
 import { formatPreferredPickup } from '../utils/dateTime';
@@ -244,6 +243,16 @@ export default function ReviewBookingScreen() {
         right={{ icon: 'call-outline', label: 'Phone', value: pendingBooking.contactNumber }}
       />
       <DetailRow icon="mail-outline" label="Email" value={pendingBooking.email} compact={compact} scale={scale} />
+      <DetailRowPair
+        compact={compact}
+        scale={scale}
+        left={{
+          icon: 'people-outline',
+          label: 'Passengers',
+          value: String(pendingBooking.passengers ?? 1),
+        }}
+        right={{ icon: 'key-outline', label: 'Room no.', value: pendingBooking.roomNo ?? '' }}
+      />
     </View>
   );
 
@@ -263,25 +272,6 @@ export default function ReviewBookingScreen() {
         left={{ icon: 'business-outline', label: 'Pickup', value: pendingBooking.from }}
         right={{ icon: 'location-outline', label: 'Drop-off', value: pendingBooking.to }}
       />
-      <DetailRowPair
-        compact={compact}
-        scale={scale}
-        left={{
-          icon: 'people-outline',
-          label: 'Passengers',
-          value: String(pendingBooking.passengers ?? 1),
-        }}
-        right={{ icon: 'key-outline', label: 'Room no.', value: pendingBooking.roomNo ?? '' }}
-      />
-      {isMeaningfulVia(pendingBooking.via) ? (
-        <DetailRow
-          icon="git-merge-outline"
-          label="Via"
-          value={pendingBooking.via}
-          compact={compact}
-          scale={scale}
-        />
-      ) : null}
       <DetailRow
         icon="time-outline"
         label="Preferred pickup"
@@ -293,6 +283,36 @@ export default function ReviewBookingScreen() {
         compact={compact}
         scale={scale}
       />
+      <DetailRow
+        icon="swap-horizontal-outline"
+        label="Trip type"
+        value={pendingBooking.tripType === 'return' ? 'Return' : 'One way'}
+        compact={compact}
+        scale={scale}
+      />
+      {pendingBooking.tripType === 'return' ? (
+        <DetailRow
+          icon="return-up-forward-outline"
+          label="Return pickup"
+          value={
+            pendingBooking.returnPickupAt
+              ? formatPreferredPickup(pendingBooking.returnPickupAt)
+              : ''
+          }
+          compact={compact}
+          scale={scale}
+        />
+      ) : null}
+      {pendingBooking.note?.trim() ? (
+        <DetailRow
+          icon="document-text-outline"
+          label="Note"
+          value={pendingBooking.note}
+          compact={compact}
+          scale={scale}
+          wrapValue
+        />
+      ) : null}
     </View>
   );
 

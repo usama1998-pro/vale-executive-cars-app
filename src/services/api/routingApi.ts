@@ -11,7 +11,6 @@ export type GeocodedPoint = {
 export type RouteQuoteResponse = {
   from: GeocodedPoint;
   to: GeocodedPoint;
-  via?: GeocodedPoint;
   distanceMeters: number;
   distanceKm: number;
   distanceMiles: number;
@@ -25,7 +24,6 @@ export type RouteQuoteResponse = {
 export type RouteQuotePayload = {
   from: string;
   to: string;
-  via?: string;
   vehicleType: VehicleType;
 };
 

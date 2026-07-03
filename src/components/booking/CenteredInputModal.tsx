@@ -29,6 +29,8 @@ type CenteredInputModalProps = {
   keyboardType?: TextInputProps['keyboardType'];
   autoCapitalize?: TextInputProps['autoCapitalize'];
   autoCorrect?: boolean;
+  maxLength?: number;
+  multiline?: boolean;
   scale?: number;
   closeOnKeyboardDismiss?: boolean;
   sheetPlacement?: SheetPlacement;
@@ -76,6 +78,8 @@ export default function CenteredInputModal({
   keyboardType,
   autoCapitalize,
   autoCorrect = true,
+  maxLength,
+  multiline = false,
   scale = 1,
   closeOnKeyboardDismiss = true,
   sheetPlacement = 'default',
@@ -166,7 +170,7 @@ export default function CenteredInputModal({
 
   const fontSize = Math.round(19 * scale);
   const titleSize = Math.round(14 * scale);
-  const inputMinHeight = Math.round(48 * scale);
+  const inputMinHeight = Math.round((multiline ? 120 : 48) * scale);
   const inputPaddingVertical = Math.round(12 * scale);
   const inputPaddingHorizontal = Math.round(14 * scale);
   const cardPadding = Math.round(spacing.lg * scale);
@@ -198,9 +202,12 @@ export default function CenteredInputModal({
               keyboardType={keyboardType}
               autoCapitalize={autoCapitalize}
               autoCorrect={autoCorrect}
+              maxLength={maxLength}
+              multiline={multiline}
               placeholderTextColor={colors.textMuted}
               style={[
                 styles.input,
+                multiline && styles.inputMultiline,
                 {
                   fontSize,
                   minHeight: inputMinHeight,
@@ -208,8 +215,9 @@ export default function CenteredInputModal({
                   paddingHorizontal: inputPaddingHorizontal,
                 },
               ]}
-              returnKeyType="done"
-              onSubmitEditing={handleDone}
+              returnKeyType={multiline ? 'default' : 'done'}
+              blurOnSubmit={!multiline}
+              onSubmitEditing={multiline ? undefined : handleDone}
             />
             {children}
             <Pressable
@@ -266,6 +274,9 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: spacing.sm,
     flexShrink: 0,
+  },
+  inputMultiline: {
+    textAlignVertical: 'top',
   },
   doneButton: {
     flexDirection: 'row',

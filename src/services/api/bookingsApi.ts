@@ -21,12 +21,14 @@ export type ApiBookingResponse = {
   from: string;
   roomNo?: string;
   passengers?: number;
+  note?: string;
   to: string;
   distanceMiles: number;
   estimatedFare: number;
   vehicleType: string;
-  via: string;
+  tripType?: 'one-way' | 'return';
   preferredPickupAt: string;
+  returnPickupAt?: string | null;
   status: ApiBookingStatus;
   submittedAt: string;
   resolvedAt: string | null;
@@ -41,12 +43,14 @@ export type CreateBookingPayload = {
   from: string;
   roomNo?: string;
   passengers?: number;
+  note?: string;
   to: string;
   distanceMiles: number;
   estimatedFare: number;
   vehicleType: string;
-  via: string;
+  tripType?: 'one-way' | 'return';
   preferredPickupAt: string;
+  returnPickupAt?: string;
   submittedAt?: string;
 };
 
@@ -75,13 +79,15 @@ export function mapApiBookingToDetails(row: ApiBookingResponse): BookingDetails 
     from: row.from,
     roomNo: row.roomNo ?? undefined,
     passengers: row.passengers ?? undefined,
-    via: row.via,
+    note: row.note ?? undefined,
     to: row.to,
     preferredPickupAt: row.preferredPickupAt,
     distanceMiles: row.distanceMiles,
     distanceKm: Math.round(row.distanceMiles * 1.609344),
     vehicleType: row.vehicleType as BookingDetails['vehicleType'],
+    tripType: row.tripType ?? 'one-way',
     estimatedFare: row.estimatedFare,
+    returnPickupAt: row.returnPickupAt ?? undefined,
     status: mapApiStatusToApp(row.status),
     createdAt: row.createdAt,
     submittedAt: row.submittedAt,

@@ -1,1 +1,12 @@
-<resources/>
+<resources>
+  <color name="datePicker_colorAccent">#C08C2F</color>
+  <color name="datePicker_colorControlActivated">#C08C2F</color>
+  <color name="datePicker_textColorPrimary">#C08C2F</color>
+  <color name="datePicker_textColorSecondary">#C08C2F</color>
+  <color name="datePicker_windowBackground">#011A16</color>
+  <color name="timePicker_background">#011A16</color>
+  <color name="timePicker_headerBackground">#011A16</color>
+  <color name="timePicker_numbersBackgroundColor">#011A16</color>
+  <color name="timePicker_numbersSelectorColor">#C08C2F</color>
+  <color name="timePicker_numbersTextColor">#C08C2F</color>
+</resources>

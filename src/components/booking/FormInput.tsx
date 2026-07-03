@@ -24,6 +24,7 @@ type FormInputProps = TextInputProps & {
   centeredEditor?: boolean;
   closeOnKeyboardDismiss?: boolean;
   sheetPlacement?: 'default' | 'top';
+  displayLines?: number;
   renderModalExtras?: (ctx: {
     draft: string;
     setDraft: (value: string) => void;
@@ -43,6 +44,7 @@ export default function FormInput({
   centeredEditor = Platform.OS !== 'web',
   closeOnKeyboardDismiss = true,
   sheetPlacement = 'default',
+  displayLines = 2,
   renderModalExtras,
   style,
   placeholderTextColor = colors.textMuted,
@@ -53,6 +55,8 @@ export default function FormInput({
   keyboardType,
   autoCapitalize,
   autoCorrect,
+  maxLength,
+  multiline,
   ...props
 }: FormInputProps) {
   const [editorOpen, setEditorOpen] = useState(false);
@@ -119,7 +123,8 @@ export default function FormInput({
               color: displayValue ? colors.text : placeholderTextColor,
             },
           ]}
-          numberOfLines={2}
+          numberOfLines={displayLines}
+          ellipsizeMode="tail"
         >
           {displayValue || placeholder}
         </Text>
@@ -207,6 +212,8 @@ export default function FormInput({
           keyboardType={keyboardType}
           autoCapitalize={autoCapitalize}
           autoCorrect={autoCorrect}
+          maxLength={maxLength}
+          multiline={multiline}
           scale={scale}
           closeOnKeyboardDismiss={closeOnKeyboardDismiss}
           sheetPlacement={sheetPlacement}

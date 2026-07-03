@@ -5,7 +5,6 @@ import { colors, radius, spacing } from '../../theme';
 
 type JourneyRouteDisplayProps = {
   from: string;
-  via?: string;
   to: string;
   compact?: boolean;
   scale?: number;
@@ -55,13 +54,11 @@ function RouteStop({
 
 export default function JourneyRouteDisplay({
   from,
-  via,
   to,
   compact = false,
   scale = 1,
 }: JourneyRouteDisplayProps) {
-  const showVia = Boolean(via?.trim());
-  const layoutCompact = compact && !showVia;
+  const layoutCompact = compact;
   const progress = useRef(new Animated.Value(0)).current;
   const arrive = useRef(new Animated.Value(0)).current;
 
@@ -138,7 +135,7 @@ export default function JourneyRouteDisplay({
     : [{ translateY: carShift }, { translateX: carBob }];
 
   return (
-    <View style={[styles.card, layoutCompact && styles.cardCompact, showVia && styles.cardWithVia]}>
+    <View style={[styles.card, layoutCompact && styles.cardCompact]}>
       <RouteStop
         label="PICKUP"
         address={from}
@@ -147,16 +144,6 @@ export default function JourneyRouteDisplay({
         scale={scale}
         alignEnd={layoutCompact}
       />
-
-      {showVia ? (
-        <RouteStop
-          label="VIA"
-          address={via!}
-          icon="git-merge-outline"
-          compact={false}
-          scale={scale}
-        />
-      ) : null}
 
       <View
         style={[
@@ -237,10 +224,6 @@ const styles = StyleSheet.create({
     padding: spacing.sm,
     marginBottom: spacing.sm,
     gap: spacing.xs,
-  },
-  cardWithVia: {
-    alignSelf: 'stretch',
-    maxWidth: '100%',
   },
   stop: {
     borderRadius: radius.sm,

@@ -4,6 +4,7 @@ import { colors, spacing } from '../../theme';
 import BookTaxiPulseButton from './BookTaxiPulseButton';
 
 const LOGO = require('../../../assets/vale-executive-brand-logo.png');
+const LOGO_ASPECT = 795 / 314;
 
 type StartSplashOverlayProps = {
   onPress: () => void;
@@ -63,22 +64,23 @@ export default function StartSplashOverlay({ onPress }: StartSplashOverlayProps)
     headlineBase = Math.round(96 * scale);
     sublineBase = Math.round(44 * scale);
     buttonSize = Math.min(
-      Math.round(availableWidth * 0.52),
-      Math.round(availableHeight * 0.24),
-      Math.round(300 * scale),
+      Math.round(availableWidth * 0.4),
+      Math.round(availableHeight * 0.19),
+      Math.round(230 * scale),
     );
   } else {
-    buttonSize = Math.round(availableHeight * 0.76);
-    copyWidth = Math.max(
-      240,
-      availableWidth - buttonSize - layoutGap,
+    buttonSize = Math.round(availableHeight * 0.5);
+    logoHeight = Math.round(availableHeight * 0.58);
+    copyWidth = Math.round(logoHeight * LOGO_ASPECT);
+    const maxCopyWidth = Math.round(
+      availableWidth - buttonSize - layoutGap - buttonSize * 0.5,
     );
-    logoHeight = Math.min(
-      Math.round(availableHeight * 0.52),
-      Math.round(copyWidth * 0.95),
-    );
-    headlineBase = Math.round(availableHeight * 0.15);
-    sublineBase = Math.round(availableHeight * 0.065);
+    if (copyWidth > maxCopyWidth) {
+      copyWidth = Math.max(240, maxCopyWidth);
+      logoHeight = Math.round(copyWidth / LOGO_ASPECT);
+    }
+    headlineBase = Math.round(availableHeight * 0.18);
+    sublineBase = Math.round(availableHeight * 0.078);
   }
 
   let headlineSize = fitSingleLineFontSize(
@@ -101,7 +103,7 @@ export default function StartSplashOverlay({ onPress }: StartSplashOverlayProps)
     : Math.max(leftHeight, buttonSize);
   const contentWidth = isPortrait
     ? Math.max(copyWidth, buttonCanvas)
-    : copyWidth + layoutGap + buttonSize;
+    : copyWidth + layoutGap + buttonSize + Math.round(buttonSize * 0.5);
 
   const heightFit = availableHeight / contentHeight;
   const widthFit = availableWidth / contentWidth;
@@ -133,8 +135,8 @@ export default function StartSplashOverlay({ onPress }: StartSplashOverlayProps)
   } else {
     logoHeight = Math.min(
       logoHeight,
-      Math.round(availableHeight * 0.52),
-      Math.round(copyWidth * 0.95),
+      Math.round(copyWidth / LOGO_ASPECT),
+      Math.round(availableHeight * 0.66),
     );
   }
 

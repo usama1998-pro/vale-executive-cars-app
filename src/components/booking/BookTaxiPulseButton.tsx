@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import {
   Animated,
   Easing,
@@ -10,7 +10,6 @@ import {
   View,
 } from 'react-native';
 import { colors } from '../../theme';
-import GoldenConfettiBurst from './GoldenConfettiBurst';
 
 const useNativeDriver = Platform.OS !== 'web';
 
@@ -31,6 +30,58 @@ export default function BookTaxiPulseButton({
   const pressScale = useRef(new Animated.Value(1)).current;
   const tapRingScale = useRef(new Animated.Value(0)).current;
   const tapRingOpacity = useRef(new Animated.Value(0)).current;
+  const pulseA = useRef(new Animated.Value(0)).current;
+  const pulseB = useRef(new Animated.Value(0)).current;
+  const floatScale = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    const makeLoop = (value: Animated.Value, delay: number) =>
+      Animated.loop(
+        Animated.sequence([
+          Animated.delay(delay),
+          Animated.timing(value, {
+            toValue: 1,
+            duration: 1800,
+            easing: Easing.out(Easing.ease),
+            useNativeDriver,
+          }),
+          Animated.timing(value, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver,
+          }),
+        ]),
+      );
+
+    const floatLoop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatScale, {
+          toValue: 1.06,
+          duration: 900,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver,
+        }),
+        Animated.timing(floatScale, {
+          toValue: 1,
+          duration: 900,
+          easing: Easing.inOut(Easing.ease),
+          useNativeDriver,
+        }),
+      ]),
+    );
+
+    const loopA = makeLoop(pulseA, 0);
+    const loopB = makeLoop(pulseB, 900);
+    loopA.start();
+    loopB.start();
+    floatLoop.start();
+
+    return () => {
+      loopA.stop();
+      loopB.stop();
+      floatLoop.stop();
+    };
+  }, [pulseA, pulseB, floatScale]);
 
   const handlePress = useCallback(() => {
     pressScale.setValue(1);
@@ -75,23 +126,41 @@ export default function BookTaxiPulseButton({
   const iconSize = size * 0.22;
   const handSize = size * 0.16;
   const taxiLabelSize = Math.max(9, size * 0.07);
-  const confettiSpread = Math.round(size * 1.05);
-  const canvasSize = Math.round(size + confettiSpread * 1.9);
-  const particleCount = Math.min(96, Math.max(56, Math.round(size * 0.24)));
+  const pulseSpread = Math.round(size * 1.05);
+  const canvasSize = Math.round(size + pulseSpread * 1.9);
+
+  const pulseStyle = (value: Animated.Value) => ({
+    opacity: value.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0.55, 0],
+    }),
+    transform: [
+      {
+        scale: value.interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 1.5],
+        }),
+      },
+    ],
+  });
 
   return (
     <View style={[styles.wrap, { width: canvasSize, height: canvasSize }]}>
-      <GoldenConfettiBurst
-        origin="circle"
-        spread={confettiSpread}
-        particleCount={particleCount}
-        repeat
-        repeatIntervalMs={2000}
-        style={{
-          left: canvasSize / 2,
-          top: canvasSize / 2,
-        }}
-      />
+      {[pulseA, pulseB].map((value, index) => (
+        <Animated.View
+          key={index}
+          pointerEvents="none"
+          style={[
+            styles.pulseRing,
+            {
+              width: outerSize,
+              height: outerSize,
+              borderRadius: outerSize / 2,
+            },
+            pulseStyle(value),
+          ]}
+        />
+      ))}
 
       <Animated.View
         pointerEvents="none"
@@ -121,7 +190,9 @@ export default function BookTaxiPulseButton({
               width: outerSize,
               height: outerSize,
               borderRadius: outerSize / 2,
-              transform: [{ scale: pressScale }],
+              transform: [
+                { scale: Animated.multiply(pressScale, floatScale) },
+              ],
             },
           ]}
         >
@@ -210,6 +281,13 @@ const styles = StyleSheet.create({
     borderColor: BUTTON_HIGHLIGHT,
     backgroundColor: 'transparent',
     zIndex: 1,
+  },
+  pulseRing: {
+    position: 'absolute',
+    borderWidth: 3,
+    borderColor: BUTTON_HIGHLIGHT,
+    backgroundColor: 'transparent',
+    zIndex: 0,
   },
   outerRing: {
     alignItems: 'center',

@@ -2,21 +2,23 @@ import { VehicleType } from '../types/booking';
 
 export const PRICING = {
   saloon: {
-    label: 'SALOON',
+    label: 'PREMIUM VEHICLE',
     firstMiles: 3,
-    firstRate: 5,
+    firstRate: 7.5,
     additionalRate: 3,
-    description: 'First 3 miles at £5/mile, then £3/mile',
+    description: 'First 3 miles at £7.50/mile, then £3/mile',
   },
   executive: {
-    label: 'EXECUTIVE',
-    perMile: 5,
-    description: '£5 per mile',
+    label: 'EXECUTIVE VEHICLE',
+    perMile: 7.5,
+    description: '£7.50 per mile',
   },
   mpv: {
-    label: 'MPV (8 Seater)',
-    multiplier: 1.5,
-    description: '1.5× Executive rate (£7.50/mile)',
+    label: 'EXECUTIVE MPV (7 Seater)',
+    firstMiles: 3,
+    firstRate: 10,
+    additionalRate: 7.5,
+    description: 'First 3 miles at £10/mile, then £7.50/mile',
   },
 } as const;
 
@@ -36,27 +38,33 @@ export function calculateExecutiveFare(miles: number): number {
 }
 
 export function calculateMpvFare(miles: number): number {
-  return calculateExecutiveFare(miles) * PRICING.mpv.multiplier;
+  if (miles <= 0) return 0;
+  if (miles <= PRICING.mpv.firstMiles) {
+    return miles * PRICING.mpv.firstRate;
+  }
+  const firstLeg = PRICING.mpv.firstMiles * PRICING.mpv.firstRate;
+  const additional = (miles - PRICING.mpv.firstMiles) * PRICING.mpv.additionalRate;
+  return firstLeg + additional;
 }
 
-/** Whole pounds (API stores `estimatedFare` as an integer). */
+/** Fare in pounds to 2 decimal places (exact pence, priced on exact miles). */
 export function calculateFare(miles: number, vehicleType: VehicleType): number {
-  const roundedMiles = Math.max(0, miles);
+  const exactMiles = Math.max(0, miles);
   let fare = 0;
   switch (vehicleType) {
     case 'saloon':
-      fare = calculateSaloonFare(roundedMiles);
+      fare = calculateSaloonFare(exactMiles);
       break;
     case 'executive':
-      fare = calculateExecutiveFare(roundedMiles);
+      fare = calculateExecutiveFare(exactMiles);
       break;
     case 'mpv':
-      fare = calculateMpvFare(roundedMiles);
+      fare = calculateMpvFare(exactMiles);
       break;
     default:
       fare = 0;
   }
-  return Math.round(fare);
+  return Math.round(fare * 100) / 100;
 }
 
 export function formatGBP(amount: number): string {

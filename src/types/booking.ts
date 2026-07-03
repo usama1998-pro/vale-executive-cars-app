@@ -1,4 +1,7 @@
 export type VehicleType = 'saloon' | 'executive' | 'mpv';
+export type TripType = 'one-way' | 'return';
+
+export const MAX_BOOKING_NOTE_LENGTH = 250;
 
 export type BookingStatus = 'draft' | 'pending' | 'accepted' | 'declined';
 
@@ -11,9 +14,11 @@ export type BookingDetails = {
   from: string;
   roomNo?: string;
   passengers?: number;
-  via: string;
+  note?: string;
   to: string;
   preferredPickupAt: string;
+  returnPickupAt?: string;
+  tripType?: TripType;
   distanceKm: number;
   distanceMiles: number;
   durationMinutes?: number;
@@ -32,15 +37,12 @@ export type BookingFormData = {
   from: string;
   roomNo: string;
   passengers: string;
-  via: string;
+  note: string;
   to: string;
   preferredPickupAt: string;
+  returnPickupAt: string;
+  tripType: TripType;
 };
-
-export function isMeaningfulVia(via?: string): boolean {
-  const trimmed = via?.trim();
-  return Boolean(trimmed && trimmed.toLowerCase() !== 'car');
-}
 
 export const EMPTY_BOOKING_FORM: BookingFormData = {
   customerName: '',
@@ -49,9 +51,11 @@ export const EMPTY_BOOKING_FORM: BookingFormData = {
   from: '',
   roomNo: '',
   passengers: '',
-  via: '',
+  note: '',
   to: '',
   preferredPickupAt: '',
+  returnPickupAt: '',
+  tripType: 'one-way',
 };
 
 export const BOOKING_MESSAGES = {

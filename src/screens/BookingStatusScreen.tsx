@@ -9,7 +9,6 @@ import { useBooking } from '../context/BookingContext';
 import { useResponsive } from '../hooks/useResponsive';
 import { BOOKING_MESSAGES } from '../types/booking';
 import { colors, radius, spacing } from '../theme';
-import { isMeaningfulVia } from '../types/booking';
 import { formatPreferredPickup } from '../utils/dateTime';
 import { formatGBP, getVehicleLabel } from '../utils/pricing';
 
@@ -181,9 +180,6 @@ export default function BookingStatusScreen() {
 
   const config = statusConfig[status] ?? statusConfig.pending;
   const showSuccessTick = status === 'pending' || status === 'accepted';
-  const viaDisplay = isMeaningfulVia(submittedBooking.via)
-    ? submittedBooking.via.trim()
-    : EMPTY_FIELD;
   const pickupDisplay = submittedBooking.preferredPickupAt
     ? formatPreferredPickup(submittedBooking.preferredPickupAt)
     : EMPTY_FIELD;
@@ -272,6 +268,20 @@ export default function BookingStatusScreen() {
                   fontSize={summarySize}
                   splitRow={splitField}
                 />
+                <SummaryField
+                  label="Passengers"
+                  value={String(submittedBooking.passengers ?? 1)}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
+                <SummaryField
+                  label="Room no."
+                  value={displayText(submittedBooking.roomNo)}
+                  compact={compact}
+                  fontSize={summarySize}
+                  splitRow={splitField}
+                />
               </SummarySection>
 
               <SummarySection
@@ -295,45 +305,25 @@ export default function BookingStatusScreen() {
                   splitRow={splitField}
                 />
                 <SummaryField
-                  label="Passengers"
-                  value={String(submittedBooking.passengers ?? 1)}
-                  compact={compact}
-                  fontSize={summarySize}
-                  splitRow={splitField}
-                />
-                <SummaryField
-                  label="Room no."
-                  value={displayText(submittedBooking.roomNo)}
-                  compact={compact}
-                  fontSize={summarySize}
-                  splitRow={splitField}
-                />
-              </SummarySection>
-            </View>
-
-            <View style={styles.summaryColumn}>
-              <SummarySection
-                title="JOURNEY DETAILS"
-                compact={compact}
-                fontSize={sectionTitleSize}
-                splitLayout
-              >
-                <SummaryField
-                  label="Via"
-                  value={viaDisplay}
-                  compact={compact}
-                  fontSize={summarySize}
-                  splitRow={splitField}
-                />
-                <SummaryField
                   label="Preferred pickup"
                   value={pickupDisplay}
                   compact={compact}
                   fontSize={summarySize}
                   splitRow={splitField}
                 />
+                {submittedBooking.note?.trim() ? (
+                  <SummaryField
+                    label="Note"
+                    value={displayText(submittedBooking.note)}
+                    compact={compact}
+                    fontSize={summarySize}
+                    splitRow={splitField}
+                  />
+                ) : null}
               </SummarySection>
+            </View>
 
+            <View style={styles.summaryColumn}>
               <SummarySection
                 title="SELECTED VEHICLE"
                 compact={compact}
@@ -392,6 +382,18 @@ export default function BookingStatusScreen() {
                 compact={compact}
                 fontSize={summarySize}
               />
+              <SummaryField
+                label="Passengers"
+                value={String(submittedBooking.passengers ?? 1)}
+                compact={compact}
+                fontSize={summarySize}
+              />
+              <SummaryField
+                label="Room no."
+                value={displayText(submittedBooking.roomNo)}
+                compact={compact}
+                fontSize={summarySize}
+              />
             </SummarySection>
 
             <SummarySection title="JOURNEY DETAILS" compact={compact} fontSize={sectionTitleSize}>
@@ -408,24 +410,19 @@ export default function BookingStatusScreen() {
                 fontSize={summarySize}
               />
               <SummaryField
-                label="Passengers"
-                value={String(submittedBooking.passengers ?? 1)}
-                compact={compact}
-                fontSize={summarySize}
-              />
-              <SummaryField
-                label="Room no."
-                value={displayText(submittedBooking.roomNo)}
-                compact={compact}
-                fontSize={summarySize}
-              />
-              <SummaryField label="Via" value={viaDisplay} compact={compact} fontSize={summarySize} />
-              <SummaryField
                 label="Preferred pickup"
                 value={pickupDisplay}
                 compact={compact}
                 fontSize={summarySize}
               />
+              {submittedBooking.note?.trim() ? (
+                <SummaryField
+                  label="Note"
+                  value={displayText(submittedBooking.note)}
+                  compact={compact}
+                  fontSize={summarySize}
+                />
+              ) : null}
             </SummarySection>
 
             <SummarySection title="SELECTED VEHICLE" compact={compact} fontSize={sectionTitleSize}>
